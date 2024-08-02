@@ -1,8 +1,17 @@
-<link href="//maxcdn.bootstrapcdn.com/bootstrap/4.1.1/css/bootstrap.min.css" rel="stylesheet" id="bootstrap-css">
-<link href="/assets/css/custom.css" rel="stylesheet">
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tunghai University Computer Science Department</title>
+    <link href="//maxcdn.bootstrapcdn.com/bootstrap/4.1.1/css/bootstrap.min.css" rel="stylesheet" id="bootstrap-css">
+    <link href="/assets/css/custom.css" rel="stylesheet">
 
-<script src="//maxcdn.bootstrapcdn.com/bootstrap/4.1.1/js/bootstrap.min.js"></script>
-<script src="//cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+    <script src="//maxcdn.bootstrapcdn.com/bootstrap/4.1.1/js/bootstrap.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+</head>
+
+<body>
 {{ if .success }}
     <div class="alert alert-success" role="alert">
         {{ .success }}
@@ -13,26 +22,32 @@
         {{ .error }}
     </div>
 {{end}}
-<div class="container register-form">
-    <form METHOD="POST" ACTION="/login">
-        <div class="form">
-            <div class="note">
-                <p>登入範例</p>
+    <div style="height: 100vh; background-color: #FFFFFF;" class="d-flex" >
+    <div class="container d-flex align-items-center" >
+        <div class="row align-items-center"> 
+            <div class="col-md-1">
+                <img src="picture/THU.png" alt="Tunghai University Logo" style="width: 150%;">
+            </div>         
+            <div class="col-md-6">
+                <h1 class="h4">東海大學資訊工程學系</h1>
+                <h2 class="h6">TUNGHAI UNIVERSITY COMPUTER SCIENCE DEPARTMENT</h2>
             </div>
-
-            <div class="form-content">
-                <div class="row">
-                    <div class="col-md-12">
+            <div class="col-md-5">
+                <form METHOD="POST" ACTION="/login">
+                    <div class="form">
+                        <div class="note">
+                            <p>登入</p>
+                        </div>
                         <div class="form-group">
                             <input type="text" class="form-control" placeholder="使用者名稱" name="username" value=""/>
                         </div>
                         <div class="form-group">
                             <input type="password" class="form-control" placeholder="密碼" name="password" value=""/>
                         </div>
+                        <button type="submit" class="btnSubmit">登入</button>
                     </div>
-                </div>
-                <button type="submit" class="btnSubmit">登入</button>
+                </form>
             </div>
         </div>
-    </form>
-</div>
+    </div>
+</body>
