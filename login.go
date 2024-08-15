@@ -187,10 +187,12 @@ func verifyCodeHandler(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "無效的請求"})
 		return
 	}
-// Auth authenticates a user by username and password
-func Auth(username string, password string) error {
+}
+
+// Auth authenticates a user by user_id and password
+func Auth(user_id string, password string) error {
 	var user User
-	err := DB.QueryRow("SELECT user_id, password FROM Users WHERE user_id = ?", username).Scan(&user.user_id, &user.password)
+	err := DB.QueryRow("SELECT user_id, password FROM Users WHERE user_id = ?", user_id).Scan(&user.user_id, &user.password)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return errors.New("user does not exist")
@@ -204,9 +206,9 @@ func Auth(username string, password string) error {
 	return nil
 }
 
-// func Auth(username string, password string) error {
-// 	if isExist := CheckUserIsExist(username); isExist {
-// 		return CheckPassword(UserData[username], password)
+// func Auth(user_id string, password string) error {
+// 	if isExist := CheckUserIsExist(user_id); isExist {
+// 		return CheckPassword(UserData[user_id], password)
 // 	} else {
 // 		return errors.New("user is not exist")
 // 	}
@@ -241,7 +243,7 @@ func LoginAuth(c *gin.Context) {
 	mu.Lock()
 	defer mu.Unlock()
 
-	if lockoutEnd, isLocked := lockoutTime[username]; isLocked {
+	if lockoutEnd, isLocked := lockoutTime[user_id]; isLocked {
 		if time.Now().Before(lockoutEnd) {
 			c.HTML(http.StatusUnauthorized, "login.html", gin.H{
 				"error": "帳號已被鎖定，請稍後再試",
@@ -249,20 +251,20 @@ func LoginAuth(c *gin.Context) {
 			return
 		}
 		// 重置鎖定時間和嘗試次數
-		delete(lockoutTime, username)
-		loginAttempts[username] = 0
+		delete(lockoutTime, user_id)
+		loginAttempts[user_id] = 0
 	}
 
-	if err := Auth(username, password); err == nil {
-		loginAttempts[username] = 0 // 成功登入後重置嘗試次數
+	if err := Auth(user_id, password); err == nil {
+		loginAttempts[user_id] = 0 // 成功登入後重置嘗試次數
 		c.HTML(http.StatusOK, "login.html", gin.H{
 			"success": "登入成功",
 		})
 		return
 	} else {
-		loginAttempts[username]++
-		if loginAttempts[username] >= 5 {
-			lockoutTime[username] = time.Now().Add(5 * time.Minute)
+		loginAttempts[user_id]++
+		if loginAttempts[user_id] >= 5 {
+			lockoutTime[user_id] = time.Now().Add(5 * time.Minute)
 			c.HTML(http.StatusUnauthorized, "login.html", gin.H{
 				"error": "身分認證失敗，帳號已被鎖定五分鐘",
 			})
@@ -275,8 +277,8 @@ func LoginAuth(c *gin.Context) {
 	}
 }
 
-func CheckUserIsExist(username string) bool {
-	_, isExist := UserData[username]
+func CheckUserIsExist(user_id string) bool {
+	_, isExist := UserData[user_id]
 	return isExist
 }
 
