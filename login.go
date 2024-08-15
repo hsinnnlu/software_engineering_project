@@ -10,8 +10,12 @@ import (
 	"sync"
 	"time"
 
+	"database/sql"
+
 	"github.com/gin-gonic/gin"
 	"gopkg.in/gomail.v2"
+
+	_ "github.com/mattn/go-sqlite3"
 )
 
 type VerificationCode struct {
@@ -25,9 +29,34 @@ var lockoutTime map[string]time.Time
 var verifyCodes map[string]VerificationCode
 var mu sync.Mutex
 
+type User struct {
+	user_id  string
+	password string
+}
+
+var DB *sql.DB
+
+func InitDB(dataSourceName string) {
+	var err error
+	DB, err = sql.Open("sqlite3", dataSourceName)
+	if err != nil {
+		log.Fatal("Failed to connect to database:", err)
+	}
+
+	// 确保连接是可用的
+	err = DB.Ping()
+	if err != nil {
+		log.Fatal("Failed to ping database:", err)
+	}
+}
+
 func init() {
-	UserData = map[string]string{
-		"test": "test",
+	// UserData = map[string]string{
+	// 	"test": "test",
+	// }
+	type User struct {
+		user_id  string
+		password string
 	}
 	verifyCodes = make(map[string]VerificationCode)
 	loginAttempts = make(map[string]int)
@@ -158,19 +187,30 @@ func verifyCodeHandler(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "無效的請求"})
 		return
 	}
-
-	email := requestBody.Email
-
-	mu.Lock()
-	defer mu.Unlock()
-
-	if verifyCode, exists := verifyCodes[email]; exists && verifyCode.Code == requestBody.Code && time.Now().Before(verifyCode.Expiration) {
-		delete(verifyCodes, email)
-		c.JSON(http.StatusOK, gin.H{"success": true, "message": "驗證成功"})
-	} else {
-		c.JSON(http.StatusUnauthorized, gin.H{"success": false, "message": "驗證碼錯誤或已過期"})
+// Auth authenticates a user by username and password
+func Auth(username string, password string) error {
+	var user User
+	err := DB.QueryRow("SELECT user_id, password FROM Users WHERE user_id = ?", username).Scan(&user.user_id, &user.password)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return errors.New("user does not exist")
+		}
+		return err
 	}
+	if user.password != password {
+		return errors.New("password is incorrect")
+	}
+
+	return nil
 }
+
+// func Auth(username string, password string) error {
+// 	if isExist := CheckUserIsExist(username); isExist {
+// 		return CheckPassword(UserData[username], password)
+// 	} else {
+// 		return errors.New("user is not exist")
+// 	}
+// }
 
 func LoginPage(c *gin.Context) {
 	c.HTML(http.StatusOK, "login.html", nil)
@@ -178,11 +218,11 @@ func LoginPage(c *gin.Context) {
 
 func LoginAuth(c *gin.Context) {
 	var (
-		username string
+		user_id  string
 		password string
 	)
-	if in, isExist := c.GetPostForm("username"); isExist && in != "" {
-		username = in
+	if in, isExist := c.GetPostForm("user_id"); isExist && in != "" {
+		user_id = in
 	} else {
 		c.HTML(http.StatusBadRequest, "login.html", gin.H{
 			"error": errors.New("必須輸入使用者名稱"),
@@ -235,14 +275,6 @@ func LoginAuth(c *gin.Context) {
 	}
 }
 
-func Auth(username string, password string) error {
-	if isExist := CheckUserIsExist(username); isExist {
-		return CheckPassword(UserData[username], password)
-	} else {
-		return errors.New("帳號不存在")
-	}
-}
-
 func CheckUserIsExist(username string) bool {
 	_, isExist := UserData[username]
 	return isExist
@@ -257,6 +289,12 @@ func CheckPassword(p1 string, p2 string) error {
 }
 
 func main() {
+
+	InitDB("./database.db")
+	defer DB.Close()
+
+	fmt.Println("Data inserted successfully!")
+
 	server := gin.Default()
 	server.LoadHTMLGlob("./login.html")
 	server.GET("/login", LoginPage)
