@@ -4,50 +4,152 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tunghai University Computer Science Department</title>
-    <link href="//maxcdn.bootstrapcdn.com/bootstrap/4.1.1/css/bootstrap.min.css" rel="stylesheet" id="bootstrap-css">
+    <link href="//maxcdn.bootstrapcdn.com/bootstrap/4.1.1/css/bootstrap.min.css" rel="stylesheet">
     <link href="/assets/css/custom.css" rel="stylesheet">
-
-    <script src="//maxcdn.bootstrapcdn.com/bootstrap/4.1.1/js/bootstrap.min.js"></script>
     <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+    <script src="//maxcdn.bootstrapcdn.com/bootstrap/4.1.1/js/bootstrap.min.js"></script>
 </head>
-
 <body>
-{{ if .success }}
-    <div class="alert alert-success" role="alert">
-        {{ .success }}
-    </div>
-{{ end }}
-{{if .error}}
-    <div class="alert alert-danger" role="alert">
-        {{ .error }}
-    </div>
-{{end}}
-    <div style="height: 100vh; background-color: #FFFFFF;" class="d-flex" >
-    <div class="container d-flex align-items-center" >
-        <div class="row align-items-center"> 
-            <div class="col-md-1">
-                <img src="picture/THU.png" alt="Tunghai University Logo" style="width: 150%;">
-            </div>         
-            <div class="col-md-6">
-                <h1 class="h4">東海大學資訊工程學系</h1>
-                <h2 class="h6">TUNGHAI UNIVERSITY COMPUTER SCIENCE DEPARTMENT</h2>
-            </div>
-            <div class="col-md-5">
-                <form METHOD="POST" ACTION="/login">
-                    <div class="form">
-                        <div class="note">
-                            <p>登入</p>
+    {{ if .success }}
+        <div class="alert alert-success" role="alert">
+            {{ .success }}
+        </div>
+    {{ end }}
+    {{ if .error }}
+        <div class="alert alert-danger" role="alert">
+            {{ .error }}
+        </div>
+    {{ end }}
+
+    <div style="height: 100vh; background-color: #FFFFFF;" class="d-flex">
+        <div class="container d-flex align-items-center">
+            <div class="row align-items-center">
+                <div class="col-md-1">
+                    <img src="picture/THU.png" alt="Tunghai University Logo" style="width: 150%;">
+                </div>
+                <div class="col-md-6">
+                    <h1 class="h4">東海大學資訊工程學系</h1>
+                    <h2 class="h6">TUNGHAI UNIVERSITY COMPUTER SCIENCE DEPARTMENT</h2>
+                </div>
+                <div class="col-md-5">
+                    <form method="POST" action="/login">
+                        <div class="form">
+                            <div class="note">
+                                <p>登入</p>
+                            </div>
+                            <div class="form-group">
+                                <input type="text" class="form-control" placeholder="使用者名稱" name="username" value=""/>
+                            </div>
+                            <div class="form-group">
+                                <input type="password" class="form-control" placeholder="密碼" name="password" value=""/>
+                            </div>
+                            <button type="submit" class="btnSubmit">登入</button>
                         </div>
-                        <div class="form-group">
-                            <input type="text" class="form-control" placeholder="使用者名稱" name="username" value=""/>
-                        </div>
-                        <div class="form-group">
-                            <input type="password" class="form-control" placeholder="密碼" name="password" value=""/>
-                        </div>
-                        <button type="submit" class="btnSubmit">登入</button>
+                    </form>
+                    <div class="forgetpasswd">
+                        <input class="prompttest" style="margin-top: 10px;" value="忘記密碼/首次登入?" readonly>
+                        <p class="show"></p>
+
+                        <script>
+                            document.addEventListener('DOMContentLoaded', function() {
+                                var button = document.querySelector('.prompttest');
+                                var resendButton = document.getElementById('resendCode');
+                                var timerDisplay = document.getElementById('timer');
+                                var guest = '';
+
+                                function popup3(event) {
+                                    event.preventDefault();
+                                    guest = window.prompt('您好!請輸入您的tmail帳號', '');
+                                    if (guest) {
+                                        sendCode();
+                                    }
+                                }
+
+                                function sendCode() {
+                                    if (!guest) {
+                                        alert('請輸入有效的電子郵件地址');
+                                        return;
+                                    }
+                                    fetch('/send-code', {
+                                        method: 'POST',
+                                        headers: {
+                                            'Content-Type': 'application/json'
+                                        },
+                                        body: JSON.stringify({ email: guest })
+                                    })
+                                    .then(response => response.json())
+                                    .then(data => {
+                                        if (data.success) {
+                                            alert('驗證碼已發送到您的信箱');
+                                            startCountdown(); // 開始倒數計時
+                                        } else {
+                                            alert('發送失敗: ' + data.message);
+                                        }
+                                    })
+                                    .catch(error => console.error('Error:', error));
+                                }
+
+                                function startCountdown() {
+                                    var timeLeft = 60; // 設定倒數時間為 60 秒
+                                    resendButton.disabled = true; // 禁用重新發送按鈕
+
+                                    var countdown = setInterval(function() {
+                                        if (timeLeft <= 0) {
+                                            clearInterval(countdown);
+                                            resendButton.disabled = false; // 啟用重新發送按鈕
+                                            timerDisplay.textContent = '驗證碼已過期，請重新發送驗證碼。';
+                                        } else {
+                                            timerDisplay.textContent = '剩餘時間: ' + timeLeft + ' 秒';
+                                        }
+                                        timeLeft -= 1;
+                                    }, 1000);
+                                }
+
+                                button.addEventListener('click', popup3);
+                                resendButton.addEventListener('click', sendCode); // 確保重新發送按鈕可以調用 sendCode
+                            });
+                        </script>
                     </div>
-                </form>
+
+                    <div id="timer" style="margin-top: 10px; color: rgb(26, 23, 23);"></div>
+                    <button id="resendCode" class="btn btn-warning" style="margin-top: 10px; margin-bottom: 10px;">重新發送驗證碼</button>
+
+                    <form method="POST" action="/verify-code" onsubmit="submitCode(event)">
+                        <div class="form-group">
+                            <input type="text" class="form-control" placeholder="請輸入驗證碼" name="code" value=""/>
+                        </div>
+                        <button type="submit" class="btnSubmit">提交驗證碼</button>
+                    </form>
+                </div>
             </div>
         </div>
     </div>
+
+    <script>
+        function submitCode(event) {
+            event.preventDefault();
+            const code = document.querySelector('input[name="code"]').value;
+            if (!code) {
+                alert('請輸入驗證碼');
+                return;
+            }
+            fetch('/verify-code', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ code: code })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('驗證碼正確');
+                } else {
+                    alert('驗證碼錯誤: ' + data.message);
+                }
+            })
+            .catch(error => console.error('Error:', error));
+        }
+    </script>
 </body>
+</html>
