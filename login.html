@@ -51,11 +51,13 @@
                         <p class="show"></p>
 
                         <script>
+                            let guest = ''; // 確保 guest 是全局變數
+                            let countdown;
+
                             document.addEventListener('DOMContentLoaded', function() {
                                 var button = document.querySelector('.prompttest');
                                 var resendButton = document.getElementById('resendCode');
                                 var timerDisplay = document.getElementById('timer');
-                                var guest = '';
 
                                 function popup3(event) {
                                     event.preventDefault();
@@ -81,33 +83,68 @@
                                     .then(data => {
                                         if (data.success) {
                                             alert('驗證碼已發送到您的信箱');
-                                            startCountdown(); // 開始倒數計時
+                                            startCooldown(); // 開始冷卻倒數
                                         } else {
                                             alert('發送失敗: ' + data.message);
+                                            startCooldown();
                                         }
                                     })
                                     .catch(error => console.error('Error:', error));
                                 }
 
-                                function startCountdown() {
-                                    var timeLeft = 60; // 設定倒數時間為 60 秒
+                                function startCooldown() {
+                                    var cooldownTime = 10; // 設定冷卻時間為 10 秒
+                                    clearInterval(countdown); // 取消之前的倒數計時器
                                     resendButton.disabled = true; // 禁用重新發送按鈕
 
-                                    var countdown = setInterval(function() {
-                                        if (timeLeft <= 0) {
+                                    countdown = setInterval(function() {
+                                        if (cooldownTime <= 0) {
                                             clearInterval(countdown);
                                             resendButton.disabled = false; // 啟用重新發送按鈕
-                                            timerDisplay.textContent = '驗證碼已過期，請重新發送驗證碼。';
+                                            timerDisplay.textContent = ''; // 清除倒數顯示
                                         } else {
-                                            timerDisplay.textContent = '剩餘時間: ' + timeLeft + ' 秒';
+                                            timerDisplay.textContent = '請稍候 ' + cooldownTime + ' 秒後再試。';
                                         }
-                                        timeLeft -= 1;
+                                        cooldownTime -= 1;
                                     }, 1000);
                                 }
 
-                                button.addEventListener('click', popup3);
-                                resendButton.addEventListener('click', sendCode); // 確保重新發送按鈕可以調用 sendCode
+                                button.addEventListener('click', function(event) {
+                                    popup3(event);
+                                    startCooldown();
+                                });
+
+                                resendButton.addEventListener('click', function(event) {
+                                    event.preventDefault();
+                                    sendCode();
+                                    startCooldown();
+                                });
                             });
+
+                            function submitCode(event) {
+                                event.preventDefault();
+                                const code = document.querySelector('input[name="code"]').value;
+                                if (!code) {
+                                    alert('請輸入驗證碼');
+                                    return;
+                                }
+                                fetch('/verify-code', {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json'
+                                    },
+                                    body: JSON.stringify({ code: code, email: guest }) // 包含 email
+                                })
+                                .then(response => response.json())
+                                .then(data => {
+                                    if (data.success) {
+                                        alert('驗證碼正確');
+                                    } else {
+                                        alert('驗證碼錯誤: ' + data.message);
+                                    }
+                                })
+                                .catch(error => console.error('Error:', error));
+                            }
                         </script>
                     </div>
 
@@ -124,32 +161,5 @@
             </div>
         </div>
     </div>
-
-    <script>
-        function submitCode(event) {
-            event.preventDefault();
-            const code = document.querySelector('input[name="code"]').value;
-            if (!code) {
-                alert('請輸入驗證碼');
-                return;
-            }
-            fetch('/verify-code', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ code: code })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    alert('驗證碼正確');
-                } else {
-                    alert('驗證碼錯誤: ' + data.message);
-                }
-            })
-            .catch(error => console.error('Error:', error));
-        }
-    </script>
 </body>
 </html>

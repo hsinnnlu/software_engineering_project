@@ -51,9 +51,6 @@ func InitDB(dataSourceName string) {
 }
 
 func init() {
-	// UserData = map[string]string{
-	// 	"test": "test",
-	// }
 	type User struct {
 		user_id  string
 		password string
@@ -137,9 +134,10 @@ func sendCodeHandler(c *gin.Context) {
 	mu.Lock()
 	verifyCodes[requestBody.Email] = VerificationCode{
 		Code:       verifyCode,
-		Expiration: time.Now().Add(2 * time.Minute), // 設置驗證碼過期時間
+		Expiration: time.Now().Add(1 * time.Minute), // 設置驗證碼過期時間
 	}
 	mu.Unlock()
+	log.Printf("Generated code for %s: %s\n", requestBody.Email, verifyCode)
 
 	// 發送郵件
 	from := "nmg@cs.thu.edu.tw"
@@ -154,38 +152,39 @@ func sendCodeHandler(c *gin.Context) {
 		return
 	}
 
-	// 設置 90 秒後檢查是否需要重送驗證碼
-	time.AfterFunc(90*time.Second, func() {
-		mu.Lock()
-		defer mu.Unlock()
-
-		// 如果驗證碼過期或用戶仍需驗證碼，則重新發送
-		if code, exists := verifyCodes[requestBody.Email]; exists && time.Now().After(code.Expiration) {
-			newCode := generateVerifyCode()
-			verifyCodes[requestBody.Email] = VerificationCode{
-				Code:       newCode,
-				Expiration: time.Now().Add(5 * time.Minute),
-			}
-			sendMail(requestBody.Email, subject, fmt.Sprintf("您的新驗證碼是: %s", newCode), from, password)
-		}
-	})
-
 	c.JSON(http.StatusOK, gin.H{"success": true, "message": "驗證碼已發送"})
 }
 
 func verifyCodeHandler(c *gin.Context) {
 	var requestBody struct {
-		Email string `json:"email"`
 		Code  string `json:"code"`
+		Email string `json:"email"`
 	}
-
-	println(requestBody.Email)
-	println(requestBody.Code)
 
 	if err := c.BindJSON(&requestBody); err != nil {
 		log.Println("錯誤的 JSON 請求:", err)
 		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "無效的請求"})
 		return
+	}
+
+	mu.Lock()
+	defer mu.Unlock()
+
+	// 從 map 中根據 Email 取得對應的驗證碼
+	if verifyCode, exists := verifyCodes[requestBody.Email]; exists {
+		// 驗證碼正確且未過期
+		log.Println("Generated code for %s: %s\n", requestBody.Email, verifyCode)
+		if verifyCode.Code == requestBody.Code && time.Now().Before(verifyCode.Expiration) {
+			// 驗證成功後，從 map 中移除該驗證碼
+			delete(verifyCodes, requestBody.Email)
+			c.JSON(http.StatusOK, gin.H{"success": true, "message": "驗證成功"})
+		} else {
+			// 驗證碼錯誤或已過期
+			c.JSON(http.StatusUnauthorized, gin.H{"success": false, "message": "驗證碼錯誤或已過期"})
+		}
+	} else {
+		// 找不到驗證碼（可能用戶尚未請求驗證碼）
+		c.JSON(http.StatusNotFound, gin.H{"success": false, "message": "無效的驗證請求"})
 	}
 }
 
@@ -205,14 +204,6 @@ func Auth(user_id string, password string) error {
 
 	return nil
 }
-
-// func Auth(user_id string, password string) error {
-// 	if isExist := CheckUserIsExist(user_id); isExist {
-// 		return CheckPassword(UserData[user_id], password)
-// 	} else {
-// 		return errors.New("user is not exist")
-// 	}
-// }
 
 func LoginPage(c *gin.Context) {
 	c.HTML(http.StatusOK, "login.html", nil)
