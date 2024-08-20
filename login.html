@@ -58,6 +58,7 @@
                                 var button = document.querySelector('.prompttest');
                                 var resendButton = document.getElementById('resendCode');
                                 var timerDisplay = document.getElementById('timer');
+                                var changePasswordForm = document.getElementById('changePasswordForm');
 
                                 function popup3(event) {
                                     event.preventDefault();
@@ -124,6 +125,7 @@
                             function submitCode(event) {
                                 event.preventDefault();
                                 const code = document.querySelector('input[name="code"]').value;
+                                const changePasswordForm = document.getElementById('changePasswordForm');
                                 if (!code) {
                                     alert('請輸入驗證碼');
                                     return;
@@ -139,6 +141,7 @@
                                 .then(data => {
                                     if (data.success) {
                                         alert('驗證碼正確');
+                                        changePasswordForm.style.display = 'block'; // 驗證成功後顯示更改密碼表單
                                     } else {
                                         alert('驗證碼錯誤: ' + data.message);
                                     }
@@ -156,6 +159,16 @@
                             <input type="text" class="form-control" placeholder="請輸入驗證碼" name="code" value=""/>
                         </div>
                         <button type="submit" class="btnSubmit">提交驗證碼</button>
+                    </form>
+
+                    <form id="changePasswordForm" method="POST" action="/change-password" style="display:none; margin-top: 20px;">
+                        <div class="form-group">
+                            <input type="password" class="form-control" placeholder="新密碼" name="new_password" required/>
+                        </div>
+                        <div class="form-group">
+                            <input type="password" class="form-control" placeholder="確認新密碼" name="confirm_password" required/>
+                        </div>
+                        <button type="submit" class="btnSubmit">更改密碼</button>
                     </form>
                 </div>
             </div>

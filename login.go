@@ -43,7 +43,6 @@ func InitDB(dataSourceName string) {
 		log.Fatal("Failed to connect to database:", err)
 	}
 
-	// 确保连接是可用的
 	err = DB.Ping()
 	if err != nil {
 		log.Fatal("Failed to ping database:", err)
@@ -173,7 +172,6 @@ func verifyCodeHandler(c *gin.Context) {
 	// 從 map 中根據 Email 取得對應的驗證碼
 	if verifyCode, exists := verifyCodes[requestBody.Email]; exists {
 		// 驗證碼正確且未過期
-		log.Println("Generated code for %s: %s\n", requestBody.Email, verifyCode)
 		if verifyCode.Code == requestBody.Code && time.Now().Before(verifyCode.Expiration) {
 			// 驗證成功後，從 map 中移除該驗證碼
 			delete(verifyCodes, requestBody.Email)
