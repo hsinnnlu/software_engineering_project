@@ -289,6 +289,8 @@ func main() {
 	fmt.Println("Data inserted successfully!")
 
 	server := gin.Default()
+	server.StaticFile("/style.css", "./style.css")
+	server.Static("/picture", "./picture")
 	server.LoadHTMLGlob("./login.html")
 	server.GET("/login", LoginPage)
 	server.POST("/login", LoginAuth)
