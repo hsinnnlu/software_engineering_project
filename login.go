@@ -1,6 +1,7 @@
 package main
 
 import (
+	"database/sql"
 	"errors"
 	"fmt"
 	"log"
@@ -9,8 +10,6 @@ import (
 	"strconv"
 	"sync"
 	"time"
-
-	"database/sql"
 
 	"github.com/gin-gonic/gin"
 	"gopkg.in/gomail.v2"
@@ -22,6 +21,8 @@ type VerificationCode struct {
 	Code       string
 	Expiration time.Time
 }
+
+var Session = make(map[string]string) // session_id -> user_id
 
 var UserData map[string]string
 var loginAttempts map[string]int
@@ -51,10 +52,6 @@ func InitDB(dataSourceName string) {
 }
 
 func init() {
-	type User struct {
-		user_id  string
-		password string
-	}
 	verifyCodes = make(map[string]VerificationCode)
 	loginAttempts = make(map[string]int)
 	lockoutTime = make(map[string]time.Time)
@@ -69,6 +66,7 @@ func generateVerifyCode() string {
 	return code
 }
 
+// 發送驗證碼郵件
 func sendMail(to, subject, body, from, password string) error {
 	m := gomail.NewMessage()
 	m.SetHeader("From", from)
@@ -84,6 +82,7 @@ func sendMail(to, subject, body, from, password string) error {
 	return nil
 }
 
+// 重新請求驗證碼
 func resendCodeHandler(c *gin.Context) {
 	var requestBody struct {
 		Email string `json:"email"`
@@ -118,6 +117,7 @@ func resendCodeHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"success": true, "message": "驗證碼已重新發送"})
 }
 
+// 接受驗證碼處理
 func sendCodeHandler(c *gin.Context) {
 	var requestBody struct {
 		Email string `json:"email"`
@@ -188,7 +188,7 @@ func verifyCodeHandler(c *gin.Context) {
 	}
 }
 
-// Auth authenticates a user by user_id and password
+// 驗證登入（使用者帳號和密碼）
 func Auth(user_id string, password string) error {
 	var user User
 	err := DB.QueryRow("SELECT user_id, password FROM Users WHERE user_id = ?", user_id).Scan(&user.user_id, &user.password)
@@ -209,6 +209,11 @@ func LoginPage(c *gin.Context) {
 	c.HTML(http.StatusOK, "login.html", nil)
 }
 
+func HomePage(c *gin.Context) {
+	c.HTML(http.StatusOK, "student.html", nil)
+}
+
+// 登入驗證
 func LoginAuth(c *gin.Context) {
 	var (
 		user_id  string
@@ -246,38 +251,36 @@ func LoginAuth(c *gin.Context) {
 		loginAttempts[user_id] = 0
 	}
 
+	// 當輸入邏輯處理完畢時，進行身份驗證
 	if err := Auth(user_id, password); err == nil {
 		loginAttempts[user_id] = 0 // 成功登入後重置嘗試次數
-		c.HTML(http.StatusOK, "login.html", gin.H{
-			"success": "登入成功",
-		})
+
+		// 產生 session_id
+		Session[user_id] = fmt.Sprintf("%d", time.Now().UnixNano())
+		c.SetCookie("user_session", Session[user_id], 3600, "/", "localhost", false, true)
+		log.Printf("User %s logged in\n", Session[user_id])
+		c.JSON(http.StatusOK, gin.H{"success": true, "message": "登入成功"})
+
 		return
+
+		// 如果登入失敗，則增加嘗試次數（超過就被ban）
 	} else {
+		fmt.Print("Login failed: ", err)
+		const maxAttempts = 5
+		const lockoutDuration = 5 * time.Minute
 		loginAttempts[user_id]++
-		if loginAttempts[user_id] >= 5 {
-			lockoutTime[user_id] = time.Now().Add(5 * time.Minute)
+		if loginAttempts[user_id] >= maxAttempts {
+			lockoutTime[user_id] = time.Now().Add(lockoutDuration)
 			c.HTML(http.StatusUnauthorized, "login.html", gin.H{
 				"error": "身分認證失敗，帳號已被鎖定五分鐘",
 			})
 			return
 		}
+		// 其他錯誤
 		c.HTML(http.StatusUnauthorized, "login.html", gin.H{
 			"error": err,
 		})
 		return
-	}
-}
-
-func CheckUserIsExist(user_id string) bool {
-	_, isExist := UserData[user_id]
-	return isExist
-}
-
-func CheckPassword(p1 string, p2 string) error {
-	if p1 == p2 {
-		return nil
-	} else {
-		return errors.New("密碼錯誤")
 	}
 }
 
@@ -286,14 +289,14 @@ func main() {
 	InitDB("./database.db")
 	defer DB.Close()
 
-	fmt.Println("Data inserted successfully!")
-
 	server := gin.Default()
 	server.StaticFile("/style.css", "./style.css")
 	server.Static("/picture", "./picture")
 	server.LoadHTMLGlob("./login.html")
 	server.GET("/login", LoginPage)
 	server.POST("/login", LoginAuth)
+	server.GET("/", HomePage)
+
 	server.POST("/resend-code", resendCodeHandler)
 	server.POST("/send-code", sendCodeHandler)
 	server.POST("/verify-code", verifyCodeHandler)
