@@ -7,8 +7,12 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"regexp"
 	"sync"
 	"time"
+
+	"github.com/gin-contrib/sessions"
+	"github.com/gin-contrib/sessions/cookie"
 
 	"github.com/dgrijalva/jwt-go"
 
@@ -21,9 +25,10 @@ import (
 )
 
 type User struct {
-	user_id  string
-	password string
-	email    string
+	user_id    string
+	password   string
+	email      string
+	permission string
 }
 
 var loginAttempts map[string]int
@@ -51,26 +56,54 @@ func InitDB(dataSourceName string) {
 	}
 }
 
-// 用戶驗證
-func Auth(user_id string, password string) error {
-	var user User
-	err := DB.QueryRow("SELECT user_id, password FROM Users WHERE user_id = ?", user_id).Scan(&user.user_id, &user.password)
-	if err != nil {
-		if err == sql.ErrNoRows {
-			return errors.New("user does not exist")
-		}
-		return err
-	}
-	if user.password != password {
+func checkPassword(inputPassword, storedPasswordHash string) error {
+	hashedInputPassword := getHashedPassword(inputPassword)
+	if hashedInputPassword != storedPasswordHash {
 		return errors.New("password is incorrect")
 	}
-
 	return nil
+}
+
+// 用戶驗證
+func Auth(user_id string, inputPassword string) (User, error) {
+	var user User
+	err := DB.QueryRow("SELECT user_id, password, user_permission FROM Users WHERE user_id = ?", user_id).Scan(&user.user_id, &user.password, &user.permission)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return user, errors.New("user does not exist")
+		}
+		return user, err
+	}
+
+	// 使用 checkPassword 函數來驗證密碼
+	err = checkPassword(inputPassword, user.password)
+	if err != nil {
+		return user, err
+	}
+
+	return user, nil
 }
 
 // 登入頁面
 func LoginPage(c *gin.Context) {
 	c.HTML(http.StatusOK, "login.html", nil)
+}
+
+func RoleMiddleware(requiredPermission string) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		session := sessions.Default(c)
+		role := session.Get("role")
+
+		if role == nil || role != requiredPermission {
+			c.HTML(http.StatusForbidden, "login.html", gin.H{
+				"error": "您沒有權限訪問該頁面",
+			})
+			c.Abort()
+			return
+		}
+
+		c.Next()
+	}
 }
 
 // 登入驗證
@@ -111,11 +144,30 @@ func LoginAuth(c *gin.Context) {
 		loginAttempts[user_id] = 0
 	}
 
-	if err := Auth(user_id, password); err == nil {
-		loginAttempts[user_id] = 0 // 成功登入後重置嘗試次數
-		c.HTML(http.StatusOK, "login.html", gin.H{
-			"success": "登入成功",
-		})
+	user, err := Auth(user_id, password)
+	if err == nil {
+		// 成功登入後重置嘗試次數
+		loginAttempts[user_id] = 0
+
+		// 設置用戶角色到會話中
+		session := sessions.Default(c)
+		session.Set("user_id", user_id)
+		session.Set("role", user.permission) // 保存用戶角色
+		session.Save()
+
+		// 根據角色進行跳轉
+		switch user.permission {
+		case "1":
+			c.Redirect(http.StatusFound, "./webpage/Student/student.html")
+		case "2":
+			c.Redirect(http.StatusFound, "./webpage/manager/Account_manage.html")
+		case "3":
+			c.Redirect(http.StatusFound, "./webpage/Professer/Student_Attendance_record.html")
+		default:
+			c.HTML(http.StatusForbidden, "login.html", gin.H{
+				"error": "未知的使用者角色",
+			})
+		}
 		return
 	} else {
 		loginAttempts[user_id]++
@@ -134,19 +186,18 @@ func LoginAuth(c *gin.Context) {
 }
 
 // 將密碼使用 SHA256
-func getHashedPassword(email string) string {
+func getHashedPassword(password string) string {
 	hash := sha256.New()
-	hash.Write([]byte(email))
+	hash.Write([]byte(password))
 	return hex.EncodeToString(hash.Sum(nil))
 }
 
-// 生成 JWT token
-func generateToken(email string) (string, error) {
-	userHashedPassword := getHashedPassword(email)
-	secretKey := jwtSecret + userHashedPassword
+// 生成 JWT token，使用明文密碼
+func generateToken(email, password string) (string, error) {
+	secretKey := jwtSecret + password // 使用原始密碼生成密鑰
 	payload := jwt.MapClaims{
 		"email":       email,
-		"expiredTime": time.Now().Add(time.Hour).Unix(), // 設置過期時間為 1 小時後
+		"expiredTime": time.Now().Add(time.Hour).Unix(),
 		"type":        "ResetPassword",
 	}
 
@@ -155,7 +206,6 @@ func generateToken(email string) (string, error) {
 	return token.SignedString([]byte(secretKey))
 }
 
-// 驗證 JWT token
 func verifyToken(tokenString string) (jwt.MapClaims, error) {
 	secretKeyFunc := func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
@@ -165,8 +215,14 @@ func verifyToken(tokenString string) (jwt.MapClaims, error) {
 		claims := token.Claims.(jwt.MapClaims)
 		email := claims["email"].(string)
 
-		userHashedPassword := getHashedPassword(email)
-		secretKey := jwtSecret + userHashedPassword
+		// 查詢資料庫獲取原始密碼
+		var password string
+		err := DB.QueryRow("SELECT password FROM Users WHERE user_email = ?", email).Scan(&password)
+		if err != nil {
+			return nil, errors.New("無法查詢用戶資料")
+		}
+
+		secretKey := jwtSecret + password
 
 		return []byte(secretKey), nil
 	}
@@ -192,7 +248,7 @@ func verifyToken(tokenString string) (jwt.MapClaims, error) {
 // 發送郵件
 func sendMail(to, body string) error {
 	from := "nmg@cs.thu.edu.tw"
-	password := "e04su3su;6" // 建議使用環境變數來存儲敏感信息
+	password := "e04su3su;6"
 	subject := "驗證碼"
 
 	m := gomail.NewMessage()
@@ -214,13 +270,26 @@ func sendResetLinkHandler(c *gin.Context) {
 	var requestBody struct {
 		Email string `json:"email"`
 	}
+
 	if err := c.BindJSON(&requestBody); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "無效的請求"})
 		return
 	}
 
+	// 查詢資料庫獲取原始密碼
+	var user User
+	err := DB.QueryRow("SELECT user_id, password FROM Users WHERE user_email = ?", requestBody.Email).Scan(&user.user_id, &user.password)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			c.JSON(http.StatusNotFound, gin.H{"success": false, "message": "用戶不存在"})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": "查詢資料庫失敗"})
+		return
+	}
+
 	// 生成 JWT Token
-	tokenString, err := generateToken(requestBody.Email)
+	tokenString, err := generateToken(requestBody.Email, user.password)
 	if err != nil {
 		log.Println("生成 Token 失敗:", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": "生成驗證 Token 失敗"})
@@ -253,24 +322,70 @@ func ResetPasswordPage(c *gin.Context) {
 		return
 	}
 
-	// 顯示重設密碼的頁面
-	c.HTML(http.StatusOK, "reset_password.html", gin.H{"token": token})
-}
-
-// 重設密碼處理
-func ResetPasswordHandler(c *gin.Context) {
-	var requestBody struct {
-		Token    string `json:"token"`
-		Email    string `json:"email"`
-		Password string `json:"password"`
+	// 驗證Token
+	claims, err := verifyToken(token)
+	if err != nil {
+		c.HTML(http.StatusBadRequest, "error.html", gin.H{
+			"error": "Token 驗證失敗或已過期",
+		})
+		return
 	}
 
-	if err := c.BindJSON(&requestBody); err != nil {
+	// Token有效，顯示更改密碼頁面
+	c.HTML(http.StatusOK, "reset_password.html", gin.H{
+		"token": token,           // 在HTML表單中以隱藏字段的形式保存token
+		"email": claims["email"], // 顯示Email或用於後續驗證
+	})
+}
+
+func validatePassword(password string) error {
+	// 密碼長度至少8個字元
+	if len(password) < 8 {
+		log.Println("Password:", password)
+		return errors.New("密碼長度必須至少8個字元")
+	}
+
+	// 密碼必須包含至少一個大寫字母
+	uppercasePattern := `[A-Z]`
+	matched, _ := regexp.MatchString(uppercasePattern, password)
+	if !matched {
+		return errors.New("密碼必須包含至少一個大寫字母")
+	}
+
+	// 密碼不可包含空白字元或特殊符號
+	illegalPattern := `[^\w]`
+	matched, _ = regexp.MatchString(illegalPattern, password)
+	if matched {
+		return errors.New("密碼不可包含空白字元或特殊符號")
+	}
+
+	return nil
+}
+
+func ResetPasswordHandler(c *gin.Context) {
+	var requestBody struct {
+		Token           string `form:"token"`
+		Email           string `form:"email"`
+		Password        string `form:"password"`
+		ConfirmPassword string `form:"confirm-password"`
+	}
+
+	if err := c.Bind(&requestBody); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "無效的請求"})
 		return
 	}
 
-	// 驗證 Token
+	if err := validatePassword(requestBody.Password); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": err.Error()})
+		return
+	}
+
+	if requestBody.Password != requestBody.ConfirmPassword {
+		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "密碼和確認密碼不一致"})
+		return
+	}
+
+	// 解碼 Token 並提取 Email
 	claims, err := verifyToken(requestBody.Token)
 	if err != nil {
 		log.Println("Token 驗證失敗:", err)
@@ -278,38 +393,83 @@ func ResetPasswordHandler(c *gin.Context) {
 		return
 	}
 
-	// 驗證 Email 是否一致
-	if claims["email"] != requestBody.Email {
-		c.JSON(http.StatusUnauthorized, gin.H{"success": false, "message": "Token 中的 Email 和請求中的 Email 不一致"})
+	email, ok := claims["email"].(string)
+	if !ok {
+		log.Println("從 Token 中提取 Email 失敗")
+		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": "Token 資料無效"})
 		return
 	}
 
-	// 更新資料庫中的密碼
 	hashedPassword := getHashedPassword(requestBody.Password)
-	_, err = DB.Exec("UPDATE Users SET password = ? WHERE email = ?", hashedPassword, requestBody.Email)
+
+	// 更新密碼
+	result, err := DB.Exec("UPDATE Users SET password = ? WHERE user_email = ?", hashedPassword, email)
 	if err != nil {
 		log.Println("更新密碼失敗:", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": "更新密碼失敗"})
 		return
 	}
 
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		log.Println("無法獲取受影響的行數:", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": "密碼更新操作失敗"})
+		return
+	}
+
+	if rowsAffected == 0 {
+		log.Println("更新密碼失敗: 無法找到對應的 email 或者密碼未修改")
+		c.JSON(http.StatusNotFound, gin.H{"success": false, "message": "無法找到對應的 email"})
+		return
+	}
+
+	log.Println("密碼更新成功")
 	c.JSON(http.StatusOK, gin.H{"success": true, "message": "密碼已成功重設"})
 }
 
-// 主程式
 func main() {
 	InitDB("./database.db")
 	defer DB.Close()
 
 	server := gin.Default()
+	// 使用 Gin 的 session
+	store := cookie.NewStore([]byte("secret"))
+	server.Use(sessions.Sessions("mysession", store))
+
 	server.StaticFile("/style.css", "./style.css")
 	server.Static("/picture", "./picture")
 	server.LoadHTMLFiles("./login.html", "./reset_password.html")
+
+	server.LoadHTMLFiles(
+		"./login.html",
+		"./reset_password.html",
+		"./webpage/Student/student.html",
+		"./webpage/manager/Account_manage.html",
+		"./webpage/Professer/Student_Attendance_record.html",
+	)
+
 	server.GET("/login", LoginPage)
 	server.POST("/login", LoginAuth)
 	server.POST("/resend-code", sendResetLinkHandler)
 	server.POST("/send-code", sendResetLinkHandler)
 	server.GET("/reset-password", ResetPasswordPage)
 	server.POST("/reset-password", ResetPasswordHandler)
+
+	// 學生頁面
+	server.GET("/webpage/Student/student.html", RoleMiddleware("1"), func(c *gin.Context) {
+		c.HTML(http.StatusOK, "student.html", nil)
+	})
+
+	// 管理員頁面
+	server.GET("/webpage/manager/Account_manage.html", RoleMiddleware("2"), func(c *gin.Context) {
+		c.HTML(http.StatusOK, "Account_manage.html", nil)
+	})
+
+	// 教授頁面
+	server.GET("/webpage/Professer/Student_Attendance_record.html", RoleMiddleware("3"), func(c *gin.Context) {
+		c.HTML(http.StatusOK, "Student_Attendance_record.html", nil)
+	})
+
+	// server.Static("/webpage", "./webpage")
 	server.Run(":8888")
 }
