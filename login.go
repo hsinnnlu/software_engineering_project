@@ -311,7 +311,7 @@ func sendResetLinkHandler(c *gin.Context) {
 	}
 
 	// 生成重設密碼的連結
-	resetLink := fmt.Sprintf("http://localhost:8888/reset-password?token=%s", tokenString)
+	resetLink := fmt.Sprintf("http://localhost:8888/login?token=%s", tokenString)
 
 	// 發送郵件
 	body := fmt.Sprintf("請點擊以下連結來重設您的密碼: %s", resetLink)
@@ -526,6 +526,7 @@ func main() {
 	server.StaticFile("/style.css", "./style.css")
 	server.Static("/picture", "./picture")
 	server.LoadHTMLFiles("./login.html", "./reset_password.html")
+	server.StaticFile("/reset_password.html", "./reset_password.html")
 
 	server.LoadHTMLFiles(
 		"./login.html",
