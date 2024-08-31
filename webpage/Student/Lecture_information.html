@@ -16,32 +16,8 @@
     </style>
 </head>
 <body style="background-color: #f0f0f0;">
-    <div class="container-fluid">
-        <!-- 標題選單 -->
-        <div class="row bg-dark text-white p-2">
-            <!-- 左 -->
-            <div class="col d-flex justify-content-between align-items-center">
-                <div>
-                    <h5 class="mb-0 fs-2">東海大學資訊工程學系</h5>
-                    <p class="mb-0 fs-6 lh-1">Tunghai University Computer Science Department</p>
-                </div>
-            </div>
-            <!-- 右 -->
-            <div class="col-2 d-flex align-items-center justify-content-end">
-                <div class="dropdown">
-                    <a class="text-white text-decoration-none dropdown-toggle" href="#" role="button" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-                        <img src="http://picsum.photos/30/30?random=10" class="rounded-circle" alt="User Image" />
-                        王XX
-                    </a>
-                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
-                        <li><a class="dropdown-item" href="#">個人資料</a></li>
-                        <li><a class="dropdown-item" href="#">修改密碼</a></li>
-                        <li><a class="dropdown-item" href="#">登出系統</a></li>
-                    </ul>
-                </div>
-            </div>
-        </div>
-    </div>
+    <div class="headerpage"></div>
+
     <div class="container">
         <div class="row d-flex align-items-center justify-content-between pt-3 pb-2">
             <div class="col-md-6 d-flex align-items-center">
@@ -87,3 +63,6 @@
     </div>
 </body>
 </html>
+<script>
+    $(".headerpage").load("../components/header.html");
+</script>
