@@ -12,6 +12,8 @@ import (
 	"sync"
 	"time"
 
+	initt "github.com/ryan2156/software_engineering_project/pkg/initializure"
+
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-contrib/sessions/cookie"
 
@@ -49,6 +51,7 @@ var DB *sql.DB
 func init() {
 	loginAttempts = make(map[string]int)
 	lockoutTime = make(map[string]time.Time)
+	initt.ConnectToDb()
 }
 
 // 初始化資料庫
@@ -67,6 +70,7 @@ func InitDB(dataSourceName string) {
 
 func checkPassword(inputPassword, storedPasswordHash string) error {
 	hashedInputPassword := getHashedPassword(inputPassword)
+	fmt.Printf(hashedInputPassword)
 	if hashedInputPassword != storedPasswordHash {
 		return errors.New("password is incorrect")
 	}
@@ -352,6 +356,7 @@ func ResetPasswordPage(c *gin.Context) {
 	})
 }
 
+// 驗證密碼
 func validatePassword(password string) error {
 	// 密碼長度至少8個字元
 	if len(password) < 8 {
@@ -525,17 +530,21 @@ func main() {
 
 	server.StaticFile("/style.css", "./style.css")
 	server.Static("/picture", "./picture")
-	server.LoadHTMLFiles("./login.html", "./reset_password.html")
+	// server.LoadHTMLFiles("./login.html", "./reset_password.html")
+
+	// server.LoadHTMLFiles(
+	// 	"./login.html",
+	// 	"./reset_password.html",
+	// 	"./webpage/Student/student.html",
+	// 	"./webpage/manager/Account_manage.html",
+	// 	"./webpage/Professer/Student_Attendance_record.html",
+	// )
 
 	server.LoadHTMLFiles(
 		"./login.html",
-		"./reset_password.html",
-		"./webpage/Student/student.html",
-		"./webpage/manager/Account_manage.html",
-		"./webpage/Professer/Student_Attendance_record.html",
+		"templates/*",
 	)
 
-	server.LoadHTMLFiles("./login.html", "./student.html", "./reset_password.html")
 	server.GET("/login", LoginPage)
 	server.POST("/login", LoginAuth)
 
@@ -558,7 +567,5 @@ func main() {
 	server.GET("/webpage/Professer/Student_Attendance_record.html", RoleMiddleware("3"), func(c *gin.Context) {
 		c.HTML(http.StatusOK, "Student_Attendance_record.html", nil)
 	})
-
-	// server.Static("/webpage", "./webpage")
 	server.Run(":8888")
 }
