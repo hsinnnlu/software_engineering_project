@@ -12,8 +12,6 @@ import (
 	"sync"
 	"time"
 
-	initt "github.com/ryan2156/software_engineering_project/pkg/initializure"
-
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-contrib/sessions/cookie"
 
@@ -48,26 +46,6 @@ var mu sync.Mutex
 var jwtSecret = "f321a343233594d17697e0c9b83b6cb192a00e8562e4b1738e263c6ac90d3d1d"
 var DB *sql.DB
 
-func init() {
-	loginAttempts = make(map[string]int)
-	lockoutTime = make(map[string]time.Time)
-	initt.ConnectToDb()
-}
-
-// 初始化資料庫
-func InitDB(dataSourceName string) {
-	var err error
-	DB, err = sql.Open("sqlite3", dataSourceName)
-	if err != nil {
-		log.Fatal("Failed to connect to database:", err)
-	}
-
-	err = DB.Ping()
-	if err != nil {
-		log.Fatal("Failed to ping database:", err)
-	}
-}
-
 func checkPassword(inputPassword, storedPasswordHash string) error {
 	hashedInputPassword := getHashedPassword(inputPassword)
 	fmt.Printf(hashedInputPassword)
@@ -81,6 +59,14 @@ func init() {
 	verifyCodes = make(map[string]VerificationCode)
 	loginAttempts = make(map[string]int)
 	lockoutTime = make(map[string]time.Time)
+
+	// 連接資料庫
+	DB, err := sql.Open("sqlite3", "../database.db")
+	if err != nil {
+		panic(err)
+	}
+	defer DB.Close()
+
 }
 
 // 用戶驗證
@@ -446,82 +432,8 @@ func ResetPasswordHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"success": true, "message": "密碼已成功重設"})
 }
 
-// 登入驗證
-// func LoginAuth(c *gin.Context) {
-// 	var (
-// 		user_id  string
-// 		password string
-// 	)
-// 	if in, isExist := c.GetPostForm("user_id"); isExist && in != "" {
-// 		user_id = in
-// 	} else {
-// 		c.HTML(http.StatusBadRequest, "login.html", gin.H{
-// 			"error": errors.New("必須輸入使用者名稱"),
-// 		})
-// 		return
-// 	}
-// 	if in, isExist := c.GetPostForm("password"); isExist && in != "" {
-// 		password = in
-// 	} else {
-// 		c.HTML(http.StatusBadRequest, "login.html", gin.H{
-// 			"error": errors.New("必須輸入密碼"),
-// 		})
-// 		return
-// 	}
-
-// 	mu.Lock()
-// 	defer mu.Unlock()
-
-// 	if lockoutEnd, isLocked := lockoutTime[user_id]; isLocked {
-// 		if time.Now().Before(lockoutEnd) {
-// 			c.HTML(http.StatusUnauthorized, "login.html", gin.H{
-// 				"error": "帳號已被鎖定，請稍後再試",
-// 			})
-// 			return
-// 		}
-// 		// 重置鎖定時間和嘗試次數
-// 		delete(lockoutTime, user_id)
-// 		loginAttempts[user_id] = 0
-// 	}
-
-// 	// 當輸入邏輯處理完畢時，進行身份驗證
-// 	if err := Auth(user_id, password); err == nil {
-// 		loginAttempts[user_id] = 0 // 成功登入後重置嘗試次數
-
-// 		// 產生 session_id
-// 		Session[user_id] = fmt.Sprintf("%d", time.Now().UnixNano())
-// 		c.SetCookie("user_session", Session[user_id], 3600, "/", "localhost", false, true)
-// 		log.Printf("User %s logged in\n", Session[user_id])
-// 		c.HTML(http.StatusOK, "student.html", gin.H{"success": "登入成功", "message": "登入成功"})
-// 		// c.JSON(http.StatusOK, gin.H{"success": true, "message": "登入成功"})
-
-// 		return
-
-// 		// 如果登入失敗，則增加嘗試次數（超過就被ban）
-// 	} else {
-// 		fmt.Print("Login failed: ", err)
-// 		const maxAttempts = 5
-// 		const lockoutDuration = 5 * time.Minute
-// 		loginAttempts[user_id]++
-// 		if loginAttempts[user_id] >= maxAttempts {
-// 			lockoutTime[user_id] = time.Now().Add(lockoutDuration)
-// 			c.HTML(http.StatusUnauthorized, "./webpage/login.html", gin.H{
-// 				"error": "身分認證失敗，帳號已被鎖定五分鐘",
-// 			})
-// 			return
-// 		}
-// 		// 其他錯誤
-// 		c.HTML(http.StatusUnauthorized, "login.html", gin.H{
-// 			"error": err,
-// 		})
-// 		return
-// 	}
-// }
-
 // 主程式
 func main() {
-	InitDB("./database.db")
-	defer DB.Close()
 
 	server := gin.Default()
 	// 使用 Gin 的 session
@@ -530,19 +442,14 @@ func main() {
 
 	server.StaticFile("/style.css", "./style.css")
 	server.Static("/picture", "./picture")
-	// server.LoadHTMLFiles("./login.html", "./reset_password.html")
-
-	// server.LoadHTMLFiles(
-	// 	"./login.html",
-	// 	"./reset_password.html",
-	// 	"./webpage/Student/student.html",
-	// 	"./webpage/manager/Account_manage.html",
-	// 	"./webpage/Professer/Student_Attendance_record.html",
-	// )
 
 	server.LoadHTMLFiles(
 		"./login.html",
-		"templates/*",
+		"./reset_password.html",
+	)
+
+	server.LoadHTMLGlob(
+		"./webpage/**/*",
 	)
 
 	server.GET("/login", LoginPage)

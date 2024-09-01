@@ -7,6 +7,8 @@ require (
 	github.com/gin-contrib/sessions v1.0.1
 	github.com/gin-gonic/gin v1.10.0
 	github.com/mattn/go-sqlite3 v1.14.22
+	github.com/ryan2156/software_engineering_project/pkg/initializure v0.0.0-00010101000000-000000000000
+	github.com/ryan2156/software_engineering_project/pkg/models v0.0.0-00010101000000-000000000000
 	gopkg.in/gomail.v2 v2.0.0-20160411212932-81ebce5c23df
 )
 
@@ -42,3 +44,9 @@ require (
 	gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
+
+replace github.com/ryan2156/software_engineering_project/pkg/initializure => ./pkg/initializure
+
+replace github.com/ryan2156/software_engineering_project/pkg/models => ./pkg/models
+replace github.com/ryan2156/software_engineering_project/pkg/service => ./pkg/service
+replace github.com/ryan2156/software_engineering_project/pkg/database => ./pkg/database
