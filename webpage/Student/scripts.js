@@ -1,5 +1,4 @@
 document.addEventListener('DOMContentLoaded', function () {
-    // 自動顯示心得單時間的 Modal
     var timeModal = new bootstrap.Modal(document.getElementById('timeModal'));
     timeModal.show();
 });

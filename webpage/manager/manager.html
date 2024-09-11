@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>University Computer Science Department</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .custom-modal {
+            background-color: #333;
+            color: #fff;
+            border-radius: 8px;
+        }
+
+        .custom-modal .modal-header,
+        .custom-modal .modal-footer {
+            border: none;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="headerpage"></div>
+
+    <div class="container-fluid">
+        <div class="row mt-3">
+            <div class="col-md-3">
+                <div class="card">
+                    <div class="card-body text-center">
+                        <img src="https://via.placeholder.com/80" class="rounded-circle mb-3" alt="User Image">
+                        <h6 class="card-title">王XX</h6>
+                        <p class="card-text">教授</p>
+                    </div>
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item"><a href="#" class="text-decoration-none">首頁</a></li>
+                        <li class="list-group-item"><a href="#" class="text-decoration-none">聽講狀況</a></li>
+                        <li class="list-group-item"><a href="#" class="text-decoration-none">講座資訊</a></li>
+                        <li class="list-group-item"><a href="#" class="text-decoration-none">心得單</a></li>
+                        <li class="list-group-item"><a href="#" class="text-decoration-none">講座簽到退</a></li>
+                        <li class="list-group-item"><a href="#" class="text-decoration-none">帳號管理</a></li>
+                        <li class="list-group-item">
+                            <a href="#" class="text-decoration-none" data-bs-toggle="modal"
+                                data-bs-target="#xinDeModal">心得單</a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="col-md-9">
+                <div class="card">
+                    <div class="card-body">
+                        <h6 class="card-title">公告發布時間</h6>
+                        <div class="d-flex mb-3">
+                            <input type="date" class="form-control me-2">
+                            <input type="date" class="form-control me-2">
+                            <input type="text" class="form-control me-2" placeholder="輸入關鍵字">
+                            <button class="btn btn-secondary">Search</button>
+                        </div>
+                        <ul class="list-group">
+                            <li class="list-group-item">
+                                <strong>[2024.04.10]</strong>[2024.04.10]AI智變未來 - 擁抱AI科技，共創AI新時代 場地異動
+                                <div class="text-muted">2024.04.03 10:42</div>
+                                <div class="text-muted">地點更改至H007</div>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="xinDeModal" tabindex="-1" aria-labelledby="xinDeModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content custom-modal">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="xinDeModalLabel">心得單</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <label for="courseSelect" class="form-label">選擇講座場次</label>
+                    <select id="courseSelect" class="form-select">
+                        <option selected>AI智慧未來 - 擁抱AI科技...</option>
+                    </select>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">確認</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+    <script>
+        $(".headerpage").load("../components/header.html");
+    </script>
+</body>
+
+</html>
