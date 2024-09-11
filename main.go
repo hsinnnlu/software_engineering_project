@@ -1,26 +1,19 @@
 package main
 
 import (
-	"log"
-
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-contrib/sessions/cookie"
 	"github.com/gin-gonic/gin"
 
 	"github.com/hsinnnlu/software_engineering_project/db"
-	. "github.com/hsinnnlu/software_engineering_project/db"
+
 	"github.com/hsinnnlu/software_engineering_project/service"
+	_ "github.com/mattn/go-sqlite3"
 )
 
 func main() {
 
-	DB, err := db.InitDB()
-	if err != nil {
-		log.Fatal("无法连接到数据库:", err)
-	}
-	defer DB.Close()
-
-	InitDB()
+	db.InitDB("./database.db")
 
 	router := gin.Default()
 	store := cookie.NewStore([]byte("secret"))
@@ -37,7 +30,7 @@ func main() {
 	router.GET("/login", service.LoginPage)
 	router.POST("/login", service.LoginAuth)
 
-	router.POST("/test", TestDB)
+	// router.POST("/test", service.TestDB)
 
 	router.Run(":8080")
 }

@@ -15,6 +15,8 @@ import (
 	"github.com/hsinnnlu/software_engineering_project/models"
 )
 
+var DB = db.DB
+
 // 登入頁面
 func LoginPage(c *gin.Context) {
 	c.HTML(http.StatusOK, "login.html", nil)
@@ -29,7 +31,7 @@ func LoginAuth(c *gin.Context) {
 	// 檢查密碼是否正確
 	user := &models.User{}
 	user, err := checkPassword(input_id, input_password)
-	fmt.Print()
+	// fmt.Print("pass B:", user.Password_hash)
 
 	// 錯誤處理
 	if err != nil {
@@ -72,13 +74,15 @@ func preProcessingInput(c *gin.Context) (user_id, password string) {
 
 // 有個資安小問題：待改進 2024/09/09
 func checkPassword(user_id, inputPassword string) (*models.User, error) {
-	hashedInputPassword := getHashedPassword(inputPassword)
+	hashedInputPassword := GetHashedPassword(inputPassword)
 	fmt.Println(hashedInputPassword) // 這裡會印出輸入密碼的 SHA256 雜湊值
 
 	// 檢查使用者是否存在
 	user := &models.User{}
-	user, err := db.GetUserById(user_id)
+	user, err := db.GetUserById(DB, user_id)
+	fmt.Println("pass B: ", user.Password_hash) // 這裡會印出資料庫中的密碼雜湊值
 	if err != nil {
+		fmt.Println("error:", err)
 		return nil, errors.New("user does not exist")
 	}
 
@@ -90,7 +94,7 @@ func checkPassword(user_id, inputPassword string) (*models.User, error) {
 }
 
 // 將密碼使用 SHA256
-func getHashedPassword(password string) string {
+func GetHashedPassword(password string) string {
 	hash := sha256.New()
 	hash.Write([]byte(password))
 	return hex.EncodeToString(hash.Sum(nil))
