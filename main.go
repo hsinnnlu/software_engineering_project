@@ -20,15 +20,16 @@ func main() {
 	router.Use(sessions.Sessions(("mysession"), store))
 
 	router.Static("/style.css", "./style.css")
-	router.Static("picture", "./picture")
+	router.Static("/picture", "./picture")
 	router.LoadHTMLFiles(
-		"./login.html",
 		"./reset_password.html",
 	)
-	router.LoadHTMLGlob(("webpage/**/*"))
+	router.LoadHTMLGlob(("./webpage/**/*"))
 
 	router.GET("/login", service.LoginPage)
 	router.POST("/login", service.LoginAuth)
+
+	router.GET("/student", service.StudentPage)
 
 	// router.POST("/test", service.TestDB)
 
