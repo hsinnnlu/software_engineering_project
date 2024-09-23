@@ -1,7 +1,9 @@
 package db
 
 import (
+	"crypto/sha256"
 	"database/sql"
+	"encoding/hex"
 	"fmt"
 	"log"
 
@@ -34,18 +36,15 @@ func GetUserById(db *sql.DB, user_id string) (*models.User, error) {
 	query := "SELECT user_id, password_hash, user_permission FROM users WHERE user_id = ?"
 	err := DB.QueryRow(query, user_id).Scan(&user.Id, &user.Password_hash, &user.Permission)
 	if err != nil {
+		// 如果找不到使用者
+		if err == sql.ErrNoRows {
+			fmt.Println("user not found")
+			return nil, fmt.Errorf("user not found")
+		}
 		return nil, err
 	}
 	return &user, nil
 
-}
-
-func VerifyPassword(db *sql.DB, id string, password string) (bool, error) {
-	var user, err = GetUserById(DB, id)
-	if err != nil {
-		return false, err
-	}
-	return user.Password_hash == password, nil
 }
 
 func TestDB(c *gin.Context, db *sql.DB, user_id string, password string) error {
@@ -74,4 +73,11 @@ func TestDB(c *gin.Context, db *sql.DB, user_id string, password string) error {
 		})
 	}
 	return nil
+}
+
+// 將密碼使用 SHA256
+func getHashedPassword(password string) string {
+	hash := sha256.New()
+	hash.Write([]byte(password))
+	return hex.EncodeToString(hash.Sum(nil))
 }

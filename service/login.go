@@ -40,11 +40,10 @@ func LoginAuth(c *gin.Context) {
 	}
 
 	// 沒有的話再檢查密碼是否正確
-	user := &models.User{} //這裡的變數用在哪裡 沒有用到哈哈，其實下一行user（type User)就是了
 	user, err := checkPassword(input_id, input_password)
 	fmt.Print()
 
-	// 錯誤處理
+	// 錯誤處理: 帳號 或 密碼錯誤
 	if err != nil {
 		c.HTML(http.StatusBadRequest, "login.html", gin.H{
 			"error": err,
@@ -67,7 +66,7 @@ func LoginAuth(c *gin.Context) {
 	session.Save()
 
 	// 根據不同使用者跳至不同的介面
-	RedirectByPermission(c, user.Permission)
+	RedirectByPermission(c, *user)
 }
 
 // 資料欄位預處理：檢查是否有輸入帳號密碼
@@ -92,20 +91,17 @@ func preProcessingInput(c *gin.Context) (user_id, password string) {
 	return user_id, password
 }
 
-// 有個資安小問題：待改進 2024/09/09
 func checkPassword(user_id, inputPassword string) (*models.User, error) {
 	hashedInputPassword := GetHashedPassword(inputPassword)
 	fmt.Println(hashedInputPassword) // 這裡會印出輸入密碼的 SHA256 雜湊值
 
 	// 檢查使用者是否存在
-	user := &models.User{}
 	user, err := db.GetUserById(DB, user_id)
-	fmt.Println("pass B: ", user.Password_hash) // 這裡會印出資料庫中的密碼雜湊值
 	if err != nil {
 		fmt.Println("error:", err)
 		return nil, errors.New("user does not exist")
 	}
-
+	fmt.Println("pass C: ", user.Password_hash) // 這裡會印出資料庫中的密碼雜湊值
 	storedPasswordHash := user.Password_hash
 	if storedPasswordHash != hashedInputPassword {
 		return nil, errors.New("password is incorrect")
@@ -114,10 +110,19 @@ func checkPassword(user_id, inputPassword string) (*models.User, error) {
 }
 
 // 根據身份進行重導向
-func RedirectByPermission(c *gin.Context, userPermission string) {
-	switch userPermission {
+func RedirectByPermission(c *gin.Context, user models.User) {
+
+	userInfo := map[string]string{
+		"user_id":    user.Id,
+		"permission": user.Permission,
+		"name":       user.Name,
+	}
+
+	switch user.Permission {
 	case "1":
-		c.Redirect(http.StatusFound, "/student")
+		c.HTML(http.StatusFound, "student.html", gin.H{
+			"user": userInfo,
+		})
 	case "2":
 		c.Redirect(http.StatusFound, "/webpage/manager/Account_manage.html")
 	case "3":

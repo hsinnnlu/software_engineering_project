@@ -1,10 +1,9 @@
 package main
 
 import (
-	"github.com/gin-contrib/sessions"
-	"github.com/gin-contrib/sessions/cookie"
 	"github.com/gin-gonic/gin"
 
+	"github.com/hsinnnlu/software_engineering_project/auth"
 	"github.com/hsinnnlu/software_engineering_project/db"
 
 	"github.com/hsinnnlu/software_engineering_project/service"
@@ -16,14 +15,10 @@ func main() {
 	db.InitDB("./database.db")
 
 	router := gin.Default()
-	store := cookie.NewStore([]byte("secret"))
-	router.Use(sessions.Sessions(("mysession"), store))
+	router.Use(auth.InitSession("secret"))
 
 	router.Static("/style.css", "./style.css")
 	router.Static("/picture", "./picture")
-	router.LoadHTMLFiles(
-		"./reset_password.html",
-	)
 	router.LoadHTMLGlob(("./webpage/**/*"))
 
 	router.GET("/login", service.LoginPage)
@@ -31,7 +26,11 @@ func main() {
 
 	router.GET("/student", service.StudentPage)
 
-	// router.POST("/test", service.TestDB)
+	// 以下都是Test的部分
+	router.GET("/test", func(ctx *gin.Context) {
+		ctx.HTML(200, "Attendance_record.html", nil)
+	})
+	//router.POST("/test", service.TestDB)
 
 	router.Run(":8080")
 }

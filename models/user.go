@@ -5,4 +5,5 @@ type User struct {
 	Password_hash string
 	Email         string
 	Permission    string // 1: 學生, 2: 管理者, 3: 老師
+	Name          string
 }
