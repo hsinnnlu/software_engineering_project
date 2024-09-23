@@ -1,9 +1,7 @@
 package db
 
 import (
-	"crypto/sha256"
 	"database/sql"
-	"encoding/hex"
 	"fmt"
 	"log"
 
@@ -47,37 +45,31 @@ func GetUserById(db *sql.DB, user_id string) (*models.User, error) {
 
 }
 
-func TestDB(c *gin.Context, db *sql.DB, user_id string, password string) error {
+// 新增講座 ， timestamp格式還沒確定
+func InsertLecture(c *gin.Context, lecture models.Lecture) error {
+
 	// 准备插入数据
-	stmt, err := db.Prepare("INSERT INTO Users(user_id, password_hash) values(?, ?)")
+	query := "INSERT INTO Lectures(lecture_id, lecture_name, lecture_speaker, lecture_timestamp, lecture_manager, lecture_location) values(?, ?, ?, ?, ?, ?)"
+	stmt, err := DB.Prepare(query)
 	if err != nil {
 		return err
 	}
 	defer stmt.Close()
 
+	fmt.Print("pass A\n")
+
 	// 插入数据
-	_, err = stmt.Exec(user_id, password)
+	_, err = stmt.Exec(lecture.Id, lecture.Name, lecture.Speaker, lecture.Timestamp, lecture.Manager, lecture.Location)
 	if err != nil {
+		fmt.Printf("Insert lecture failed, err: %v\n", err)
 		return err
 	}
 
-	fmt.Print("Insert user success\n")
+	fmt.Print("Insert lecture success\n")
 
-	if err != nil {
-		c.JSON(200, gin.H{
-			"message": "error",
-		})
-	} else {
-		c.JSON(200, gin.H{
-			"message": "success",
-		})
-	}
+	c.JSON(200, gin.H{
+		"message": "success for insert lecture",
+	})
+
 	return nil
-}
-
-// 將密碼使用 SHA256
-func getHashedPassword(password string) string {
-	hash := sha256.New()
-	hash.Write([]byte(password))
-	return hex.EncodeToString(hash.Sum(nil))
 }
