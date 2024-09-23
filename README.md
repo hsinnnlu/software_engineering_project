@@ -1,4 +1,15 @@
 # software_engineering_project
+
+
+## 分支介紹 RedirectByPermission
+這是專門處理不同權限渲染的分支，為避免master的節點過多，因此創建此分支
+
+關於遠端分支操作詳請參見，裡面講得很清楚
+https://blog.longwin.com.tw/2013/11/git-create-remote-branch-2013/
+
+另外，你們可能注意到github上多了「Compare & pull request」，這是是在說將分支合併到主幹上的請求，當功能都做完時再按就好了
+
+
 ## github 協作教學
 這邊不會講解原理，網路上的講解很多。只告訴大家如何快速地操作
 ### 從遠端版本庫首次下載至指定目錄
