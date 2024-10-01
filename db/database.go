@@ -56,7 +56,7 @@ func InsertLecture(c *gin.Context, lecture models.Lecture) error {
 	}
 	defer stmt.Close()
 
-	fmt.Print("pass A\n")
+	fmt.Printf("lecture ID is: %d\n", lecture.Id)
 
 	// 插入数据
 	_, err = stmt.Exec(lecture.Id, lecture.Name, lecture.Speaker, lecture.Timestamp, lecture.Manager, lecture.Location)

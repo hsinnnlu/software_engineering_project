@@ -27,7 +27,6 @@ func LoginAuth(c *gin.Context) {
 
 	// 輸入邏輯處理: 是否輸入使用者的帳號密碼
 	input_id, input_password := preProcessingInput(c)
-	fmt.Println("pass A")
 
 	// 看帳號有沒有被鎖定，有的話就報錯
 	isLocked := checkLockoutStatus(c)
@@ -93,7 +92,6 @@ func preProcessingInput(c *gin.Context) (user_id, password string) {
 
 func checkPassword(user_id, inputPassword string) (*models.User, error) {
 	hashedInputPassword := GetHashedPassword(inputPassword)
-	fmt.Println(hashedInputPassword) // 這裡會印出輸入密碼的 SHA256 雜湊值
 
 	// 檢查使用者是否存在
 	user, err := db.GetUserById(DB, user_id)
@@ -101,7 +99,6 @@ func checkPassword(user_id, inputPassword string) (*models.User, error) {
 		fmt.Println("error:", err)
 		return nil, errors.New("user does not exist")
 	}
-	fmt.Println("pass C: ", user.Password_hash) // 這裡會印出資料庫中的密碼雜湊值
 	storedPasswordHash := user.Password_hash
 	if storedPasswordHash != hashedInputPassword {
 		return nil, errors.New("password is incorrect")
@@ -123,8 +120,12 @@ func RedirectByPermission(c *gin.Context, user models.User) {
 		c.HTML(http.StatusFound, "student.html", gin.H{
 			"user": userInfo,
 		})
+		c.Redirect(http.StatusFound, "student.html")
+		fmt.Println("Redirect to /student")
 	case "2":
-		c.Redirect(http.StatusFound, "/webpage/manager/Account_manage.html")
+		c.HTML(http.StatusFound, "manager.html", gin.H{
+			"user": userInfo,
+		})
 	case "3":
 		c.Redirect(http.StatusFound, "/webpage/Professer/Student_Attendance_record.html")
 	default:

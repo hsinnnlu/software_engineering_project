@@ -34,18 +34,27 @@ func main() {
 		ctx.HTML(200, "Attendance_record.html", nil)
 	})
 
+	router.GET("/manager", func(c *gin.Context) {
+		c.HTML(200, "manager.html", nil)
+	})
+
+	// 新增講座（目前用lambda，還沒包起來）
+
+	router.POST("/ttt", service.AddLecture)
 	router.POST("/addLecture", func(c *gin.Context) {
 
 		fmt.Print("call addLecture\n")
 
 		lecture := models.Lecture{
-			Id:        "002",
+			Id:        3,
 			Name:      "軟體工程",
 			Timestamp: "星期三 13:00~16:00", // 時間格式還沒確定
 			Location:  "資電館",
 			Speaker:   "劉信宏",
 		}
 		db.InsertLecture(c, lecture)
+
+		c.HTML(201, "manager.html", nil)
 	})
 
 	//router.POST("/test", service.TestDB)
