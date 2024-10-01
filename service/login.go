@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"log"
 	"net/http"
 	"time"
 
@@ -24,73 +25,90 @@ func LoginPage(c *gin.Context) {
 }
 
 func LoginAuth(c *gin.Context) {
+	// 初始化 session
+	session := sessions.Default(c) // 在這裡直接取得 session
 
 	// 輸入邏輯處理: 是否輸入使用者的帳號密碼
-	input_id, input_password := preProcessingInput(c)
-	fmt.Println("pass A")
+	input_id, input_password, err := preProcessingInput(c)
+	if err != nil {
+		return
+	}
 
-	// 看帳號有沒有被鎖定，有的話就報錯
-	isLocked := checkLockoutStatus(c)
-	if isLocked {
-		// 如果帳號已鎖定，顯示錯誤訊息
+	// 檢查帳號是否已鎖定
+	if checkLockoutStatus(c) { // 傳遞 gin.Context
 		c.HTML(http.StatusTooManyRequests, "login.html", gin.H{
-			"error": "帳號已鎖定，請在三分鐘後重試。",
+			"error": "帳號已鎖定，請稍後再試。",
 		})
 		return
 	}
 
-	// 沒有的話再檢查密碼是否正確
+	locktime := session.Get("locktime")
+	log.Print("locktimetest:", locktime)
+
+	// 驗證密碼
 	user, err := checkPassword(input_id, input_password)
-	fmt.Print()
-
-	// 錯誤處理: 帳號 或 密碼錯誤
 	if err != nil {
-		c.HTML(http.StatusBadRequest, "login.html", gin.H{
-			"error": err,
-		})
-
-		// 計數器
-		attempts := incrementLoginAttempts(c)
-		if attempts {
+		// 增加登入失敗次數
+		if incrementLoginAttempts(c) { // 傳遞 gin.Context
 			c.HTML(http.StatusUnauthorized, "login.html", gin.H{
-				"error": "身分認證失敗，帳號已被鎖定三分鐘",
+				"error": "帳號已被鎖定三分鐘，請稍後再試。",
+			})
+		} else {
+			c.HTML(http.StatusBadRequest, "login.html", gin.H{
+				"error": "帳號或密碼錯誤，請再試一次。",
 			})
 		}
 		return
 	}
 
-	// 登入成功: 設定 session
-	session := sessions.Default(c)
-	session.Set("user_id", user.Id)      // 保存用戶名稱
-	session.Set("role", user.Permission) // 保存用戶角色
+	// 登入成功: 重置計數器和 session 狀態
+	c.HTML(http.StatusOK, "success.html", gin.H{
+		"message": "登入成功",
+	})
+
+	session.Set("login_attempts", 0)
+	session.Delete("locktime")
+	session.Set("user_id", user.Id)
+	session.Set("role", user.Permission)
 	session.Save()
 
-	// 根據不同使用者跳至不同的介面
+	// 根據權限進行重定向
 	RedirectByPermission(c, *user)
 }
 
+// 測試成功 2024/09/24
 // 資料欄位預處理：檢查是否有輸入帳號密碼
-func preProcessingInput(c *gin.Context) (user_id, password string) {
-
+func preProcessingInput(c *gin.Context) (user_id, password string, err error) {
 	if in, isExist := c.GetPostForm("user_id"); isExist && in != "" {
 		user_id = in
 	} else {
+		err = errors.New("必須輸入使用者名稱")
 		c.HTML(http.StatusBadRequest, "login.html", gin.H{
-			"error": errors.New("必須輸入使用者名稱"),
+			"error": err,
 		})
 		return
 	}
 	if in, isExist := c.GetPostForm("password"); isExist && in != "" {
 		password = in
 	} else {
+		err = errors.New("必須輸入密碼")
 		c.HTML(http.StatusBadRequest, "login.html", gin.H{
-			"error": errors.New("必須輸入密碼"),
+			"error": err,
 		})
 		return
 	}
-	return user_id, password
+	return user_id, password, nil
 }
 
+// 測試成功 2024/09/24
+// 將密碼使用 SHA256
+func GetHashedPassword(password string) string {
+	hash := sha256.New()
+	hash.Write([]byte(password))
+	return hex.EncodeToString(hash.Sum(nil))
+}
+
+// 測試成功 2024/09/24
 func checkPassword(user_id, inputPassword string) (*models.User, error) {
 	hashedInputPassword := GetHashedPassword(inputPassword)
 	fmt.Println(hashedInputPassword) // 這裡會印出輸入密碼的 SHA256 雜湊值
@@ -109,57 +127,24 @@ func checkPassword(user_id, inputPassword string) (*models.User, error) {
 	return user, nil
 }
 
-// 根據身份進行重導向
-func RedirectByPermission(c *gin.Context, user models.User) {
-
-	userInfo := map[string]string{
-		"user_id":    user.Id,
-		"permission": user.Permission,
-		"name":       user.Name,
-	}
-
-	switch user.Permission {
-	case "1":
-		c.HTML(http.StatusFound, "student.html", gin.H{
-			"user": userInfo,
-		})
-	case "2":
-		c.Redirect(http.StatusFound, "/webpage/manager/Account_manage.html")
-	case "3":
-		c.Redirect(http.StatusFound, "/webpage/Professer/Student_Attendance_record.html")
-	default:
-		c.HTML(http.StatusForbidden, "login.html", gin.H{
-			"error": "未知的使用者角色",
-		})
-	}
-}
-
+// senssion沒有time的資料
 // 檢查是否在鎖定時間內
 func checkLockoutStatus(c *gin.Context) bool {
 	session := sessions.Default(c)
 	locktime := session.Get("locktime")
+	log.Print("locktime:", locktime)
 
-	// 檢查是否在鎖定時間內
 	if locktime != nil {
 		lockoutEndTime := locktime.(time.Time)
 		if time.Now().Before(lockoutEndTime) {
 			return true
 		} else {
-			// 如果鎖定時間已過，重置鎖定狀態
 			session.Set("login_attempts", 0)
-			session.Set("locktime", nil)
+			session.Delete("locktime")
 			session.Save()
 		}
 	}
-	// 如果未鎖定，返回 false
 	return false
-}
-
-// 將密碼使用 SHA256
-func GetHashedPassword(password string) string {
-	hash := sha256.New()
-	hash.Write([]byte(password))
-	return hex.EncodeToString(hash.Sum(nil))
 }
 
 // 登入失敗計數器
@@ -167,20 +152,84 @@ func incrementLoginAttempts(c *gin.Context) bool {
 	session := sessions.Default(c)
 	attempts := session.Get("login_attempts")
 
+	var attemptsCount int
 	if attempts == nil {
-		attempts = 0
+		attemptsCount = 0
+	} else {
+		attemptsCount = attempts.(int)
 	}
 
-	attempts = attempts.(int) + 1
-	session.Set("login_attempts", attempts)
+	attemptsCount++
+	session.Set("login_attempts", attemptsCount)
+	log.Print("login_attempts 設置為: ", session.Get("login_attempts"))
 
-	// 如果錯誤次數達到 5 次，鎖定帳號三分鐘
-	if attempts.(int) >= 5 {
+	if attemptsCount >= 5 {
 		session.Set("locktime", time.Now().Add(3*time.Minute))
+		log.Print("locktime 設置為: ", session.Get("locktime"))
 		session.Save()
 		return true
 	}
 
 	session.Save()
 	return false
+}
+
+// 根據身份進行重導向
+func RedirectByPermission(c *gin.Context, user models.User) {
+
+	// userInfo := map[string]string{
+	// 	"user_id":    user.Id,
+	// 	"permission": user.Permission,
+	// 	"name":       user.Name,
+	// }
+
+	switch user.Permission {
+	case "1":
+		c.Redirect(http.StatusFound, "/webpage/Student/student.html")
+		// c.HTML(http.StatusFound, "student.html", gin.H{
+		// 	"user": userInfo,
+		// })
+	case "2":
+		c.Redirect(http.StatusFound, "/webpage/manager/manager.html")
+	case "3":
+		c.Redirect(http.StatusFound, "/webpage/Professer/professer.html")
+	default:
+		c.HTML(http.StatusForbidden, "login.html", gin.H{
+			"error": "未知的使用者角色",
+		})
+	}
+}
+
+func RoleMiddleware(allowedRoles ...string) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		session := sessions.Default(c)
+		role := session.Get("role")
+
+		if role == nil {
+			c.HTML(http.StatusUnauthorized, "login.html", gin.H{
+				"error": "您尚未登入，請先登入。",
+			})
+			c.Abort()
+			return
+		}
+
+		userRole := role.(string)
+		allowed := false
+		for _, allowedRole := range allowedRoles {
+			if userRole == allowedRole {
+				allowed = true
+				break
+			}
+		}
+
+		if !allowed {
+			c.HTML(http.StatusForbidden, "switch_url_error.html", gin.H{
+				"error": "您沒有權限訪問該頁面。",
+			})
+			c.Abort()
+			return
+		}
+
+		c.Next()
+	}
 }
