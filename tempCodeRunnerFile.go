@@ -1,1 +1,1 @@
-/Professer/professer.html
+/webpage/login/reset_password
