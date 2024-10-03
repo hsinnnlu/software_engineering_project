@@ -88,3 +88,24 @@ func GetLectureById(db *sql.DB, lecture_id int) (*models.Lecture, error) {
 	}
 	return &lecture, nil
 }
+
+func GetAnnouncementList(db *sql.DB) ([]models.Announce, error) {
+	announces := []models.Announce{}
+	query := "SELECT announce_id, announce_title, announce_content, announce_time FROM Announcements"
+	rows, err := DB.Query(query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		announce := models.Announce{}
+		err := rows.Scan(&announce.Id, &announce.Title, &announce.Content, &announce.Time)
+		if err != nil {
+			return nil, err
+		}
+		announces = append(announces, announce)
+	}
+	return announces, nil
+
+}

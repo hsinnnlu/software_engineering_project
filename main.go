@@ -43,6 +43,9 @@ func main() {
 
 	// 針對學生的路由
 	router.GET("/webpage/Student/student.html", service.RoleMiddleware("1"))
+
+	router.GET("/Announcements", service.RenderAnnouncement)
+
 	// 針對管理員的路由
 	router.GET("/webpage/manager/manager.html", service.RoleMiddleware("2"))
 
@@ -50,8 +53,6 @@ func main() {
 	router.GET("/webpage/Professer/professer.html", service.RoleMiddleware("3"), func(c *gin.Context) {
 		c.HTML(http.StatusOK, "professer.html", nil)
 	})
-
-	router.GET("/student", service.StudentPage)
 
 	// 測試部分
 	router.GET("/test", func(ctx *gin.Context) {

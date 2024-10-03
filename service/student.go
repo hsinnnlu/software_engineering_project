@@ -1,13 +1,18 @@
-// 目前沒有任何程式 call 到這個檔案，所以可以先不用管他
-
 package service
 
 import (
-	"net/http"
+	"fmt"
 
 	"github.com/gin-gonic/gin"
+	"github.com/hsinnnlu/software_engineering_project/db"
 )
 
-func StudentPage(c *gin.Context) {
-	c.HTML(http.StatusOK, "student.html", nil)
+func RenderAnnouncement(c *gin.Context) {
+	announceList, err := db.GetAnnouncementList(DB)
+	if err != nil {
+		fmt.Println("error:", err)
+	}
+
+	fmt.Printf("announceList: %v\n", announceList)
+	c.JSON(200, announceList)
 }
