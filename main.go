@@ -31,6 +31,11 @@ func main() {
 
 	router.GET("/login", service.LoginPage)
 	router.POST("/login", service.LoginAuth)
+	router.POST("/SendLink", service.SendLink)
+
+	// 2024.10.03 傳送連結到user mail後，驗證token並顯示更改密碼頁面
+	router.GET("/webpage/login/reset_password", service.ResetPasswordPage)
+	router.POST("/reset-password", service.ResetPassword)
 
 	// 未登入的使用者
 	// noUser := models.User{

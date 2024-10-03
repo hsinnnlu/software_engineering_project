@@ -29,7 +29,6 @@ func InitDB(dataSourceName string) {
 }
 
 func GetUserById(db *sql.DB, user_id string) (*models.User, error) {
-
 	user := models.User{}
 	query := "SELECT user_id, password_hash, user_permission, user_name FROM users WHERE user_id = ?"
 	err := DB.QueryRow(query, user_id).Scan(&user.Id, &user.Password_hash, &user.Permission, &user.Name)
@@ -43,6 +42,46 @@ func GetUserById(db *sql.DB, user_id string) (*models.User, error) {
 	}
 	return &user, nil
 
+}
+
+func GetUserByEmail(email string) (*models.User, error) {
+	user := models.User{}
+	query := "SELECT user_id FROM users WHERE user_email = ?"
+	err := DB.QueryRow(query, email).Scan(&user.Id)
+	if err != nil {
+		// 如果找不到使用者
+		if err == sql.ErrNoRows {
+			fmt.Println("user not found")
+			return nil, fmt.Errorf("user not found")
+		}
+		return nil, err
+	}
+	return &user, nil
+}
+
+func GetpasswordByEmail(email string) (*models.User, error) {
+	user := models.User{}
+	query := "SELECT password_hash FROM users WHERE user_email = ?"
+	err := DB.QueryRow(query, email).Scan(&user.Password_hash)
+	if err != nil {
+		// 如果找不到密碼
+		if err == sql.ErrNoRows {
+			fmt.Println("user not found")
+			return nil, fmt.Errorf("user not found")
+		}
+		return nil, err
+	}
+	return &user, nil
+}
+
+// 更新用戶密碼
+func UpdatePasswordByEmail(db *sql.DB, email, hashedPassword string) error {
+	query := "UPDATE users SET password_hash = ? WHERE user_email = ?"
+	_, err := db.Exec(query, hashedPassword, email)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 // 新增講座 ， timestamp格式還沒確定
