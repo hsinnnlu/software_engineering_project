@@ -10,10 +10,16 @@ import (
 )
 
 // 新增講座：目前只有 名稱、時間
+
+// func LectureList() []models.Lecture {
+
+// }
+
 func AddLecture(c *gin.Context) {
 	fmt.Print("AddLecture\n")
 
 	lecture := models.Lecture{}
+	// 講座編號是自動產生的，不需要輸入
 
 	if in, isExist := c.GetPostForm("lecture_name"); isExist && in != "" {
 		lecture.Name = c.PostForm("lecture_name")

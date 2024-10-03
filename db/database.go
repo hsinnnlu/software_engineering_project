@@ -31,8 +31,8 @@ func InitDB(dataSourceName string) {
 func GetUserById(db *sql.DB, user_id string) (*models.User, error) {
 
 	user := models.User{}
-	query := "SELECT user_id, password_hash, user_permission FROM users WHERE user_id = ?"
-	err := DB.QueryRow(query, user_id).Scan(&user.Id, &user.Password_hash, &user.Permission)
+	query := "SELECT user_id, password_hash, user_permission, user_name FROM users WHERE user_id = ?"
+	err := DB.QueryRow(query, user_id).Scan(&user.Id, &user.Password_hash, &user.Permission, &user.Name)
 	if err != nil {
 		// 如果找不到使用者
 		if err == sql.ErrNoRows {
@@ -72,4 +72,19 @@ func InsertLecture(c *gin.Context, lecture models.Lecture) error {
 	})
 
 	return nil
+}
+
+func GetLectureById(db *sql.DB, lecture_id int) (*models.Lecture, error) {
+	lecture := models.Lecture{}
+	query := "SELECT lecture_id, lecture_name, lecture_speaker, lecture_timestamp, lecture_manager, lecture_location FROM Lectures WHERE lecture_id = ?"
+	err := DB.QueryRow(query, lecture_id).Scan(&lecture.Id, &lecture.Name, &lecture.Speaker, &lecture.Timestamp, &lecture.Manager, &lecture.Location)
+	if err != nil {
+		// 如果找不到講座
+		if err == sql.ErrNoRows {
+			fmt.Println("lecture not found")
+			return nil, fmt.Errorf("lecture not found")
+		}
+		return nil, err
+	}
+	return &lecture, nil
 }
