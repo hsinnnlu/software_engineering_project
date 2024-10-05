@@ -37,8 +37,6 @@ func main() {
 	router.GET("/webpage/login/reset_password", service.ResetPasswordPage)
 	router.POST("/reset-password", service.ResetPassword)
 
-	router.POST("/Header_change_password", service.HeaderResetPassword)
-
 	// 未登入的使用者
 	// noUser := models.User{
 	// 	Id:            "未登入",
