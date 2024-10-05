@@ -30,8 +30,8 @@ func InitDB(dataSourceName string) {
 
 func GetUserById(db *sql.DB, user_id string) (*models.User, error) {
 	user := models.User{}
-	query := "SELECT user_id, password_hash, user_permission FROM users WHERE user_id = ?"
-	err := DB.QueryRow(query, user_id).Scan(&user.Id, &user.Password_hash, &user.Permission)
+	query := "SELECT user_id, password_hash, user_permission, user_name FROM users WHERE user_id = ?"
+	err := DB.QueryRow(query, user_id).Scan(&user.Id, &user.Password_hash, &user.Permission, &user.Name)
 	if err != nil {
 		// 如果找不到使用者
 		if err == sql.ErrNoRows {
@@ -84,6 +84,15 @@ func UpdatePasswordByEmail(db *sql.DB, email, hashedPassword string) error {
 	return nil
 }
 
+func UpdatePasswordByUserid(db *sql.DB, user_id, hashedPassword string) error {
+	query := "UPDATE users SET password_hash = ? WHERE user_id = ?"
+	_, err := db.Exec(query, hashedPassword, user_id)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 // 新增講座 ， timestamp格式還沒確定
 func InsertLecture(c *gin.Context, lecture models.Lecture) error {
 
@@ -95,7 +104,7 @@ func InsertLecture(c *gin.Context, lecture models.Lecture) error {
 	}
 	defer stmt.Close()
 
-	fmt.Print("pass A\n")
+	fmt.Printf("lecture ID is: %d\n", lecture.Id)
 
 	// 插入数据
 	_, err = stmt.Exec(lecture.Id, lecture.Name, lecture.Speaker, lecture.Timestamp, lecture.Manager, lecture.Location)
@@ -111,4 +120,40 @@ func InsertLecture(c *gin.Context, lecture models.Lecture) error {
 	})
 
 	return nil
+}
+
+func GetLectureById(db *sql.DB, lecture_id int) (*models.Lecture, error) {
+	lecture := models.Lecture{}
+	query := "SELECT lecture_id, lecture_name, lecture_speaker, lecture_timestamp, lecture_manager, lecture_location FROM Lectures WHERE lecture_id = ?"
+	err := DB.QueryRow(query, lecture_id).Scan(&lecture.Id, &lecture.Name, &lecture.Speaker, &lecture.Timestamp, &lecture.Manager, &lecture.Location)
+	if err != nil {
+		// 如果找不到講座
+		if err == sql.ErrNoRows {
+			fmt.Println("lecture not found")
+			return nil, fmt.Errorf("lecture not found")
+		}
+		return nil, err
+	}
+	return &lecture, nil
+}
+
+func GetAnnouncementList(db *sql.DB) ([]models.Announce, error) {
+	announces := []models.Announce{}
+	query := "SELECT announce_id, announce_title, announce_content, announce_time FROM Announcements"
+	rows, err := DB.Query(query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		announce := models.Announce{}
+		err := rows.Scan(&announce.Id, &announce.Title, &announce.Content, &announce.Time)
+		if err != nil {
+			return nil, err
+		}
+		announces = append(announces, announce)
+	}
+	return announces, nil
+
 }

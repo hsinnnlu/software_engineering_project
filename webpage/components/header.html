@@ -1,26 +1,206 @@
 <div class="container-fluid">
     <!-- 標題選單 -->
     <div class="row bg-dark text-white p-2">
-        <!-- 左 -->
+        <!-- 左側 -->
         <div class="col d-flex justify-content-between align-items-center">
             <div>
                 <h5 class="mb-0 fs-2">東海大學資訊工程學系</h5>
                 <p class="mb-0 fs-6 lh-1">Tunghai University Computer Science Department</p>
             </div>
         </div>
-        <!-- 右 -->
+        <!-- 右側 -->
         <div class="col-2 d-flex align-items-center justify-content-end">
             <div class="dropdown">
                 <a class="text-white text-decoration-none dropdown-toggle" href="#" role="button" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
                     <img src="http://picsum.photos/30/30?random=10" class="rounded-circle" alt="User Image" />
-                    王XX
+                    {{ .user.Name }}
                 </a>
                 <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
-                    <li><a class="dropdown-item" href="#">個人資料</a></li>
-                    <li><a class="dropdown-item" href="#">修改密碼</a></li>
-                    <li><a class="dropdown-item" href="#">登出系統</a></li>
+                    <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#profileModal">個人資料</a></li>
+                    <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#passwordModal">修改密碼</a></li>
+                    <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#logoutModal">登出系統</a></li>
                 </ul>
             </div>
         </div>
     </div>
 </div>
+
+<!-- 個人資料 Modal -->
+<div class="modal fade" id="profileModal" tabindex="-1" aria-labelledby="profileModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="profileModalLabel">個人資料</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <!-- 顯示用戶個人資料 -->
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">關閉</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 修改密碼 Modal -->
+<div class="modal fade" id="passwordModal" tabindex="-1" aria-labelledby="passwordModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="passwordModalLabel">修改密碼</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <form id="change-password-form" method="POST" action="/Header_change_password" class="needs-validation" novalidate>
+          <div class="mb-3 text-start">
+            <label for="new-password" class="form-label">新密碼:</label>
+            <input type="password" id="new-password" name="new-password" class="form-control" placeholder="請輸入新密碼" required>
+            <small class="password-hint">
+                <ul class="list-unstyled">
+                    <li>長度至少8個字元 <span class="checkmark" id="length-check">✔️</span></li>
+                    <li>必須包含至少一個大寫字母 <span class="checkmark" id="uppercase-check">✔️</span></li>
+                    <li>密碼不可包含空白字元或特殊符號 <span class="checkmark" id="symbol-check">✔️</span></li>
+                </ul>
+            </small>
+          </div>
+
+          <div class="mb-3 text-start">
+            <label for="confirm-password" class="form-label">確認新密碼:</label>
+            <input type="password" id="confirm-password" name="confirm-password" class="form-control" placeholder="請再次輸入新密碼" required>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">關閉</button>
+        <button type="button" class="btn btn-secondary" id="change-password-btn">確認修改</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 登出系統 Modal -->
+<div class="modal fade" id="logoutModal" tabindex="-1" aria-labelledby="logoutModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="logoutModalLabel">確認登出</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        確定要登出嗎？
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+        <button type="button" class="btn btn-primary" id="logout-btn">登出</button>
+      </div>
+    </div>
+  </div>
+</div>
+{{ if .error }}
+<div id="error-message" class="alert alert-danger">
+    {{ .error }}
+</div>
+{{ end }}
+
+<!-- 相關 CSS -->
+<style>
+  /* 設定彈跳視窗的樣式，確保它與重設密碼頁面一致 */
+  .modal-content {
+      padding: 20px;  /* 調整內部留白 */
+      background-color: #f8f9fa;
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  }
+
+  .password-hint {
+      font-size: 0.9rem;
+      color: #6c757d;
+      text-align: left;
+      margin-top: 5px;
+  }
+
+  .checkmark {
+      color: green;
+      display: none;
+      font-size: 1.2rem;
+      margin-left: 10px;
+  }
+
+  .list-unstyled {
+      margin-top: 10px;
+      margin-left: 25px;
+      padding-left: 0;
+  }
+
+  .list-unstyled li {
+      list-style-type: disc;
+      margin-bottom: 5px;
+  }
+
+  /* 隱藏 Bootstrap 的有效狀態勾號 */
+  .was-validated .form-control:valid {
+      border-color: transparent;
+      background-image: none;
+  }
+  .was-validated .form-control:invalid {
+      border-color: transparent;
+      background-image: none;
+  }
+
+  #error-message {
+      width: 250px;
+      margin: 0 auto;
+      padding: 10px;
+      font-size: 14px;
+      margin-bottom: 8px;
+  }
+</style>
+
+<script>
+  // 密碼規則驗證
+  function validatePassword(password) {
+      const lengthCheck = password.length >= 8;
+      const uppercaseCheck = /[A-Z]/.test(password);
+      const symbolCheck = /^[\w!?]*$/.test(password);
+
+      document.getElementById('length-check').style.display = lengthCheck ? 'inline' : 'none';
+      document.getElementById('uppercase-check').style.display = uppercaseCheck ? 'inline' : 'none';
+      document.getElementById('symbol-check').style.display = symbolCheck ? 'inline' : 'none';
+
+      return lengthCheck && uppercaseCheck && symbolCheck;
+  }
+
+  document.getElementById('new-password').addEventListener('input', function() {
+      const password = this.value;
+      validatePassword(password);
+  });
+
+  document.getElementById('confirm-password').addEventListener('input', function() {
+      const confirmPassword = this.value;
+      const password = document.getElementById('new-password').value;
+      document.getElementById('confirm-checkmark').style.display = confirmPassword === password ? 'inline' : 'none';
+  });
+
+  // 在確認修改按鈕上添加 click 事件
+  document.getElementById('change-password-btn').addEventListener('click', function() {
+      const form = document.getElementById('change-password-form');
+      
+      if (form.checkValidity()) {
+          form.submit();  // 手動提交表單
+      } else {
+          form.classList.add('was-validated');  // 顯示驗證錯誤
+      }
+  });
+
+  // 顯示彈跳視窗和重定向
+  window.onload = function() {
+      var message = "{{ .message }}"; // 從後端獲取訊息
+      if (message) {
+          // 顯示對話框
+          alert(message);
+          // 確認後重定向到登入頁面
+          window.location.href = "/login";
+      }
+  };
+</script>

@@ -61,11 +61,6 @@ func LoginAuth(c *gin.Context) {
 		return
 	}
 
-	// 登入成功: 重置計數器和 session 狀態
-	c.HTML(http.StatusOK, "success.html", gin.H{
-		"message": "登入成功",
-	})
-
 	session.Set("login_attempts", 0)
 	session.Delete("locktime")
 	session.Set("user_id", user.Id)
@@ -73,6 +68,8 @@ func LoginAuth(c *gin.Context) {
 	session.Save()
 
 	// 根據權限進行重定向
+	fmt.Print("login success\n")
+
 	RedirectByPermission(c, *user)
 }
 
@@ -111,7 +108,6 @@ func GetHashedPassword(password string) string {
 // 測試成功 2024/09/24
 func checkPassword(user_id, inputPassword string) (*models.User, error) {
 	hashedInputPassword := GetHashedPassword(inputPassword)
-	fmt.Println(hashedInputPassword) // 這裡會印出輸入密碼的 SHA256 雜湊值
 
 	// 檢查使用者是否存在
 	user, err := db.GetUserById(DB, user_id)
@@ -119,7 +115,6 @@ func checkPassword(user_id, inputPassword string) (*models.User, error) {
 		fmt.Println("error:", err)
 		return nil, errors.New("user does not exist")
 	}
-	fmt.Println("pass C: ", user.Password_hash) // 這裡會印出資料庫中的密碼雜湊值
 	storedPasswordHash := user.Password_hash
 	if storedPasswordHash != hashedInputPassword {
 		return nil, errors.New("password is incorrect")
@@ -127,7 +122,6 @@ func checkPassword(user_id, inputPassword string) (*models.User, error) {
 	return user, nil
 }
 
-// senssion沒有time的資料
 // 檢查是否在鎖定時間內
 func checkLockoutStatus(c *gin.Context) bool {
 	session := sessions.Default(c)
@@ -177,18 +171,16 @@ func incrementLoginAttempts(c *gin.Context) bool {
 // 根據身份進行重導向
 func RedirectByPermission(c *gin.Context, user models.User) {
 
-	// userInfo := map[string]string{
-	// 	"user_id":    user.Id,
-	// 	"permission": user.Permission,
-	// 	"name":       user.Name,
-	// }
-
 	switch user.Permission {
 	case "1":
 		c.Redirect(http.StatusFound, "/webpage/Student/student.html")
-		// c.HTML(http.StatusFound, "student.html", gin.H{
-		// 	"user": userInfo,
-		// })
+		c.HTML(http.StatusOK, "header.html", gin.H{
+			"user": user,
+		})
+		c.HTML(http.StatusOK, "student.html", gin.H{
+			"user": user,
+		})
+
 	case "2":
 		c.Redirect(http.StatusFound, "/webpage/manager/manager.html")
 	case "3":

@@ -1,7 +1,7 @@
 package models
 
 type Lecture struct {
-	Id              string
+	Id              int
 	Name            string
 	Speaker         string
 	Timestamp       string
