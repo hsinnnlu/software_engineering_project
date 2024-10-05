@@ -84,6 +84,15 @@ func UpdatePasswordByEmail(db *sql.DB, email, hashedPassword string) error {
 	return nil
 }
 
+func UpdatePasswordByUserid(db *sql.DB, user_id, hashedPassword string) error {
+	query := "UPDATE users SET password_hash = ? WHERE user_id = ?"
+	_, err := db.Exec(query, hashedPassword, user_id)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 // 新增講座 ， timestamp格式還沒確定
 func InsertLecture(c *gin.Context, lecture models.Lecture) error {
 

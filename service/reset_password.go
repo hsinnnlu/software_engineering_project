@@ -1,8 +1,6 @@
 package service
 
 import (
-	"crypto/sha256"
-	"encoding/hex"
 	"errors"
 	"fmt"
 	"log"
@@ -135,8 +133,10 @@ func ResetPassword(c *gin.Context) {
 		return
 	}
 
+	hashedPassword := GetHashedPassword(requestBody.Password)
+
 	// 更新數據庫中的密碼
-	err = updatePasswordInDB(emailFromClaims, requestBody.Password)
+	err = updatePasswordInDB(emailFromClaims, hashedPassword)
 	log.Println("updatedb_err: ", err)
 	if err != nil {
 		c.HTML(http.StatusInternalServerError, "reset_password.html", gin.H{
@@ -312,10 +312,6 @@ func getResetPasswordRequestBody(c *gin.Context) (struct {
 		return requestBody, errors.New("無效的請求")
 	}
 
-	if err := validatePassword(requestBody.Password); err != nil {
-		return requestBody, err
-	}
-
 	return requestBody, nil
 }
 
@@ -358,16 +354,8 @@ func validatePassword(password string) error {
 	return nil
 }
 
-func HashedPassword(password string) string {
-	hash := sha256.New()
-	hash.Write([]byte(password))
-	return hex.EncodeToString(hash.Sum(nil))
-}
-
-func updatePasswordInDB(email, password string) error {
-	hashedPassword := HashedPassword(password)
+func updatePasswordInDB(email, hashedPassword string) error {
 	DB = db.DB
-
 	err := db.UpdatePasswordByEmail(DB, email, hashedPassword)
 	if err != nil {
 		return err
