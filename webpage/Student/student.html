@@ -89,13 +89,15 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.min.js"></script>
     <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
     <script>
+
+        // 渲染 公告列表 /AnnouncementList
         axios.get("http://localhost:8080/Announcements").then(res => {
             const announcements = res.data;
             console.log(announcements);
             const announceList = document.getElementById('announce-list');
             
             // 迭代每個 講座announcement 並動態生成 HTML
-            announcements.forEach(iter => {
+            announceList.forEach(iter => {
                 const listItem = document.createElement('li');
                 listItem.textContent = `ID: ${iter.id}, Name: ${iter.name}, Age: ${iter.age}`;
                 listItem.className = 'list-group-item';

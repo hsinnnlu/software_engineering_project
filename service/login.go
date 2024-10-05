@@ -63,7 +63,10 @@ func LoginAuth(c *gin.Context) {
 
 	session.Set("login_attempts", 0)
 	session.Delete("locktime")
+
 	session.Set("user_id", user.Id)
+	c.SetCookie("user_cookie", user.Id, 3600, "/", "localhost", false, true)
+
 	session.Set("role", user.Permission)
 	session.Save()
 

@@ -16,3 +16,8 @@ func RenderAnnouncement(c *gin.Context) {
 	fmt.Printf("announceList: %v\n", announceList)
 	c.JSON(200, announceList)
 }
+
+func Attendance_record(c *gin.Context) {
+	c.HTML(200, "Attendance_record.html", nil)
+
+}

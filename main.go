@@ -1,14 +1,12 @@
 package main
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 
 	"github.com/hsinnnlu/software_engineering_project/auth"
 	"github.com/hsinnnlu/software_engineering_project/db"
-	"github.com/hsinnnlu/software_engineering_project/models"
 	"github.com/hsinnnlu/software_engineering_project/service"
 	_ "github.com/mattn/go-sqlite3"
 )
@@ -48,8 +46,11 @@ func main() {
 
 	// 針對學生的路由
 	router.GET("/webpage/Student/student.html", service.RoleMiddleware("1"))
-
 	router.GET("/Announcements", service.RenderAnnouncement)
+
+	router.GET("/Attendance_record", auth.AuthMiddleware(), func(c *gin.Context) {
+		c.HTML(http.StatusOK, "Attendance_record.html", nil)
+	})
 
 	// 針對管理員的路由
 	router.GET("/webpage/manager/manager.html", service.RoleMiddleware("2"))
@@ -66,24 +67,6 @@ func main() {
 
 	router.GET("/manager", func(c *gin.Context) {
 		c.HTML(200, "manager.html", nil)
-	})
-
-	// 新增講座（目前用lambda，還沒包起來）
-
-	router.POST("/ttt", service.AddLecture)
-	router.POST("/addLecture", func(c *gin.Context) {
-		fmt.Println("call addLecture")
-
-		lecture := models.Lecture{
-			Id:        3,
-			Name:      "軟體工程",
-			Timestamp: "星期三 13:00~16:00", // 時間格式還沒確定
-			Location:  "資電館",
-			Speaker:   "劉信宏",
-		}
-		db.InsertLecture(c, lecture)
-
-		c.HTML(201, "manager.html", nil)
 	})
 
 	// 將通配符路由放在最後
