@@ -1,0 +1,43 @@
+/* 簽到退頁面中的button */
+.custom-btn {
+    background-color: white;      
+    color: #0d6efd;              
+    border-color: white;          
+}
+.custom-btn:hover {
+    background-color: #0d6efd;     
+    color: white;  
+    border-color: #0d6efd;              
+}
+
+/* 是否雲端同步之標示 */
+.greencircle {
+    width: 20px;            
+    height: 20px;             
+    background-color: rgb(148, 237, 137);; 
+    border-radius: 50%;  
+    display: inline-block;
+}
+.redcircle {
+    width: 20px;            
+    height: 20px;             
+    background-color: rgb(232, 118, 118);; 
+    border-radius: 50%;  
+    display: inline-block;
+}
+
+/* 表格設計 */
+.table-bordered th, .table-bordered td{
+    border: 1.5px solid #545454;
+}
+
+/* 首頁設計 */
+.custom-modal {
+    background-color: #333;
+    color: #fff;
+    border-radius: 8px;
+}
+.custom-modal .modal-header,
+.custom-modal .modal-footer {
+    border: none;
+}

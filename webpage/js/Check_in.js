@@ -1,0 +1,2 @@
+$(".Record").load("Record.html");
+

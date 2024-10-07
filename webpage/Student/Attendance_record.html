@@ -9,11 +9,7 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.1/dist/js/bootstrap.bundle.min.js" integrity="sha384-/bQdsTh/da6pkI1MST/rWKFNjaCP5gBSY4sEBT38Q/9RBh9AH40zEOg7Hlq2THRZ" crossorigin="anonymous"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 
-    <style>
-        .table-bordered th, .table-bordered td{
-            border: 1.5px solid #545454;
-        }
-    </style>
+    <link rel="stylesheet" href="../css/style.css">
 </head>
 <body style="background-color: #f0f0f0;">
     <div class="headerpage"></div>
@@ -21,7 +17,7 @@
     <div class="container">
         <div class="row d-flex align-items-center justify-content-between pt-3 pb-2">
             <div class="col-md-6 d-flex align-items-center">
-                <a href="#">
+                <a href="student.html">
                     <button class="btn btn-outline-dark h6 me-2 shadow-sm">
                         <i class="bi bi-box-arrow-left"></i>
                         返回
@@ -53,11 +49,11 @@
                     <td>AI智變未來 - 擁抱AI科技，共創AI新時代</td>
                     <td>18：02（準時）</td>
                     <td>20：03（早退）</td>
-                    <td><a href="#">
-                        <a href="#"></a><button type="button" class="btn btn-sm">
+                    <td>
+                        <button type="button" class="btn btn-sm">
                             <i class="bi bi-file-text fs-4"></i>
-                        </button></a>
-                    </a></td>
+                        </button>
+                    </td>
                 </tr>
                 </tbody>
             </table>
@@ -73,5 +69,7 @@
 </html>
 
 <script>
-    $(".headerpage").load("../components/header.html");
+    $(document).ready(function() { 
+        $(".headerpage").load("../components/header.html");
+    });
 </script>
