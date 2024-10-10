@@ -2,7 +2,7 @@ package main
 
 import (
 	"net/http"
-
+	
 	"github.com/gin-gonic/gin"
 
 	"github.com/hsinnnlu/software_engineering_project/auth"
@@ -44,21 +44,45 @@ func main() {
 	// 	Permission:    "1",
 	// }
 
-	// 針對學生的路由
-	router.GET("/webpage/Student/student.html", service.RoleMiddleware("1"))
-	router.GET("/Announcements", service.RenderAnnouncement)
+	// 針對header的路由
+	router.POST("/Header_change_password", service.HeaderResetPassword)
+	router.POST("/logout", service.Logout) // 2024.10.10 登出
 
-	router.GET("/Attendance_record", auth.AuthMiddleware(), func(c *gin.Context) {
-		c.HTML(http.StatusOK, "Attendance_record.html", nil)
+	// 針對學生的路由
+	// 主頁面
+	router.GET("/webpage/Student/student.html", service.RoleMiddleware("1"), func(c *gin.Context) {
+		user, _ := auth.GetCurrentUser(c)
+		c.HTML(http.StatusOK, "student.html", gin.H{
+			"user": user,
+		})
 	})
+	router.GET("/Announcements", service.RenderAnnouncement)
+	// profile
+	router.GET("/webpage/Student/Attendance_record.html",service.Attendance_record)
+	router.GET("/webpage/Student/Lecture_information.html",service.Lecture_information)
+	router.GET("/webpage/Student/Lecture_notes.html",service.Lecture_notes)
 
 	// 針對管理員的路由
-	router.GET("/webpage/manager/manager.html", service.RoleMiddleware("2"))
+	router.GET("/webpage/manager/manager.html", service.RoleMiddleware("2"), func(c *gin.Context) {
+		user, _ := auth.GetCurrentUser(c)
+		c.HTML(http.StatusOK, "manager.html", gin.H{
+			"user": user,
+		})
+	})
+	// profile
+	router.GET("/webpage/Check_in_and_out/Lecture_CheckIn.html",service.Lecture_CheckIn)
+	router.GET("/webpage/manager/Lecture_manage.html",service.Lecture_manage)
+	router.GET("/webpage/manager/Account_manage.html",service.Account_manage)
 
 	// 針對教授的路由
 	router.GET("/webpage/Professer/professer.html", service.RoleMiddleware("3"), func(c *gin.Context) {
-		c.HTML(http.StatusOK, "professer.html", nil)
+		user, _ := auth.GetCurrentUser(c)
+		c.HTML(http.StatusOK, "professer.html", gin.H{
+			"user": user,
+		})
 	})
+	// profile
+	router.GET("/webpage/Professer/Student_Attendance_record.html",service.Student_Attendance_record)
 
 	// 測試部分
 	router.GET("/test", func(ctx *gin.Context) {

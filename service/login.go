@@ -173,20 +173,17 @@ func incrementLoginAttempts(c *gin.Context) bool {
 
 // 根據身份進行重導向
 func RedirectByPermission(c *gin.Context, user models.User) {
-
+	session := sessions.Default(c)
 	switch user.Permission {
 	case "1":
+		session.Set("redirect_url", "/webpage/Student/student.html")
+		session.Save()
 		c.Redirect(http.StatusFound, "/webpage/Student/student.html")
-		c.HTML(http.StatusOK, "header.html", gin.H{
-			"user": user,
-		})
-		c.HTML(http.StatusOK, "student.html", gin.H{
-			"user": user,
-		})
-
 	case "2":
 		c.Redirect(http.StatusFound, "/webpage/manager/manager.html")
 	case "3":
+		session.Set("redirect_url", "/webpage/Professer/professer.html")
+		session.Save()
 		c.Redirect(http.StatusFound, "/webpage/Professer/professer.html")
 	default:
 		c.HTML(http.StatusForbidden, "login.html", gin.H{

@@ -15,6 +15,7 @@
                     <img src="http://picsum.photos/30/30?random=10" class="rounded-circle" alt="User Image" />
                     {{ .user.Name }}
                 </a>
+                <!-- 點更改密碼、個人資料等的時候是藍色的，看之後要不要改 2024.10.10 -->
                 <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
                     <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#profileModal">個人資料</a></li>
                     <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#passwordModal">修改密碼</a></li>
@@ -92,13 +93,14 @@
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
-        <a href="../login/login.html"><button type="button" class="btn btn-primary" id="logout-btn">登出</button></a>
+        <a><button type="button" class="btn btn-secondary" id="logout-btn">登出</button></a>
       </div>
     </div>
   </div>
 </div>
+
 {{ if .error }}
-<div id="error-message" class="alert alert-danger">
+<div id="error-message" class="alert alert-danger" style="width: 100%;">
     {{ .error }}
 </div>
 {{ end }}
@@ -192,6 +194,22 @@
           form.classList.add('was-validated');  // 顯示驗證錯誤
       }
   });
+
+  document.getElementById('logout-btn').addEventListener('click', function () {
+        // 發送 POST 請求到 /logout
+        axios.post('http://localhost:8080/logout')
+            .then(response => {
+                // 處理成功的響應
+                alert(response.data.message); // 提示登出成功消息
+                // 可以選擇重定向到登入頁面或首頁
+                window.location.href = '/login'; // 替換為你的登入頁面 URL
+            })
+            .catch(error => {
+                // 處理錯誤的響應
+                console.error('登出失敗:', error);
+                alert('登出失敗，請重試！');
+            });
+    });
 
   // 顯示彈跳視窗和重定向
   window.onload = function() {

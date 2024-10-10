@@ -11,7 +11,9 @@
 
 <body>
 
-    <div class="headerpage"></div>
+    <div class="headerpage">
+        {{ template "header.html" . }}
+    </div>
 
     <div class="container-fluid">
         <div class="row mt-3">
@@ -23,11 +25,10 @@
                         <p class="card-text">教授</p>
                     </div>
                     <ul class="list-group list-group-flush">
-                        <li class="list-group-item"><a href="#" class="text-decoration-none">首頁</a></li>
-                        <li class="list-group-item"><a href="#" class="text-decoration-none">心得單</a></li>
-                        <li class="list-group-item"><a href="../Check_in_and_out/Lecture_CheckIn.html" class="text-decoration-none">講座簽到退</a></li>
-                        <li class="list-group-item"><a href="Lecture_manage.html" class="text-decoration-none">講座管理</a></li>
-                        <li class="list-group-item"><a href="Account_manage.html" class="text-decoration-none">帳號管理</a></li>
+                        <li class="list-group-item"><a href="/webpage/manager/manager.html" class="text-decoration-none">首頁</a></li>
+                        <li class="list-group-item"><a href="/webpage/Check_in_and_out/Lecture_CheckIn.html" class="text-decoration-none">講座簽到退</a></li>
+                        <li class="list-group-item"><a href="/webpage/manager/Lecture_manage.html" class="text-decoration-none">講座管理</a></li>
+                        <li class="list-group-item"><a href="/webpage/manager/Account_manage.html" class="text-decoration-none">帳號管理</a></li>
                         <li class="list-group-item">
                             <a href="#" class="text-decoration-none" data-bs-toggle="modal"
                                 data-bs-target="#xinDeModal">心得單</a>

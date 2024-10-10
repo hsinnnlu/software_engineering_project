@@ -8,12 +8,13 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-
 </head>
 
 <body>
 
-    <div class="headerpage"></div>
+    <div class="headerpage">
+        {{ template "header.html" . }}
+    </div>
 
     <div class="container-fluid">
         <div class="row mt-3">
@@ -25,11 +26,11 @@
                         <p class="card-text">學生</p>
                     </div>
                     <ul class="list-group list-group-flush">
-                        <li class="list-group-item"><a href="#" class="text-decoration-none">首頁</a></li>
-                        <li class="list-group-item"><a href="Attendance_record.html" class="text-decoration-none">聽課狀況</a></li>
-                        <li class="list-group-item"><a href="Lecture_information.html" class="text-decoration-none">講座資訊</a></li>
+                        <li class="list-group-item"><a href="/webpage/Student/student.html" class="text-decoration-none">首頁</a></li>
+                        <li class="list-group-item"><a href="/webpage/Student/Attendance_record.html" class="text-decoration-none">聽課狀況</a></li>
+                        <li class="list-group-item"><a href="/webpage/Student/Lecture_information.html" class="text-decoration-none">講座資訊</a></li>
                         <li class="list-group-item">
-                            <a href="#" class="text-decoration-none" data-bs-toggle="modal"
+                            <a href="/webpage/Student/Lecture_notes.html" class="text-decoration-none" data-bs-toggle="modal"
                                 data-bs-target="#xinDeModal">心得單</a>
                         </li>
                     </ul>
@@ -104,7 +105,6 @@
         })
         .catch(error => console.error('Error fetching users:', error));
 
-        $(".headerpage").load("../components/header.html");
     </script>
 </body>
 
