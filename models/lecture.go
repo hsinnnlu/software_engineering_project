@@ -1,11 +1,12 @@
 package models
 
 type Lecture struct {
-	Id              int
-	Name            string
-	Speaker         string
-	Timestamp       string
-	Manager         string
-	Qty_participate string
-	Location        string
+	Id              int    `json:"id"`
+	Name            string `json:"name"`
+	Speaker         string `json:"speaker"`
+	Timestamp       string `json:"timestamp"`
+	Manager         string `json:"manager"`
+	Qty_participate string `json:"qty_participate"`
+	Location        string `json:"location"`
+	Status          string `json:"status"`
 }
