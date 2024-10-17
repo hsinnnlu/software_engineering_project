@@ -164,7 +164,7 @@ func GetLecturesByStatus(db *sql.DB, lecture_status ...string) ([]models.Lecture
 
 func GetAnnouncementList(db *sql.DB) ([]models.Announce, error) {
 	announces := []models.Announce{}
-	query := "SELECT announce_id, announce_title, announce_content, announce_time FROM Announcements"
+	query := "SELECT announce_id, announce_title, announce_content, announce_date FROM Announcements"
 	rows, err := DB.Query(query)
 	if err != nil {
 		return nil, err
@@ -173,7 +173,7 @@ func GetAnnouncementList(db *sql.DB) ([]models.Announce, error) {
 
 	for rows.Next() {
 		announce := models.Announce{}
-		err := rows.Scan(&announce.Id, &announce.Title, &announce.Content, &announce.Time)
+		err := rows.Scan(&announce.Id, &announce.Title, &announce.Content, &announce.Date)
 		if err != nil {
 			return nil, err
 		}
