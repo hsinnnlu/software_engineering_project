@@ -155,5 +155,58 @@ func GetAnnouncementList(db *sql.DB) ([]models.Announce, error) {
 		announces = append(announces, announce)
 	}
 	return announces, nil
+}
 
+func GetAttendanceRecord(db *sql.DB, userID string) ([]models.Lecture, error) {
+    Lectures := []models.Lecture{}
+
+    // 修改查詢語句，依據 user 進行過濾
+    query := "SELECT Name, Timestamp, Location, Speaker FROM Lecture?"
+
+    // 執行查詢時，將 userID 傳入
+    rows, err := db.Query(query, userID)
+    if err != nil {
+        return nil, err
+    }
+    defer rows.Close()
+
+    // 逐行處理查詢結果
+    for rows.Next() {
+        Lecture := models.Lecture{}
+        err := rows.Scan(&Lecture.Name, &Lecture.Timestamp, &Lecture.Location, &Lecture.Speaker)
+        if err != nil {
+            return nil, err
+        }
+        // 將每筆紀錄加到切片中
+        Lectures = append(Lectures, Lecture)
+    }
+
+    return Lectures, nil
+}
+
+func GetLectureInformation(db *sql.DB, userID string) ([]models.User_Lecture, error) {
+    User_Lectures := []models.User_Lecture{}
+
+    // 修改查詢語句，依據 user 進行過濾
+    query := "SELECT lecture, Sign_in_time, Sign_out_time FROM User_Lecture WHERE user = ?"
+
+    // 執行查詢時，將 userID 傳入
+    rows, err := db.Query(query, userID)
+    if err != nil {
+        return nil, err
+    }
+    defer rows.Close()
+
+    // 逐行處理查詢結果
+    for rows.Next() {
+        User_Lecture := models.User_Lecture{}
+        err := rows.Scan(&User_Lecture.Lecture, &User_Lecture.Sign_in_time, &User_Lecture.Sign_out_time)
+        if err != nil {
+            return nil, err
+        }
+        // 將每筆紀錄加到切片中
+        User_Lectures = append(User_Lectures, User_Lecture)
+    }
+
+    return User_Lectures, nil
 }
