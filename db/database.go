@@ -124,7 +124,7 @@ func InsertLecture(c *gin.Context, lecture models.Lecture) error {
 
 func GetLectureById(db *sql.DB, lecture_id int) (*models.Lecture, error) {
 	lecture := models.Lecture{}
-	query := "SELECT lecture_id, lecture_name, lecture_speaker, lecture_timestamp, lecture_manager, lecture_location FROM Lectures WHERE lecture_id = ?"
+	query := "SELECT lecture_id, lecture_name, lecture_speaker, lecture_timestamp, lecture_manager, lecture_location, status FROM Lectures WHERE lecture_id = ?"
 	err := DB.QueryRow(query, lecture_id).Scan(&lecture.Id, &lecture.Name, &lecture.Speaker, &lecture.Timestamp, &lecture.Manager, &lecture.Location)
 	if err != nil {
 		// 如果找不到講座
@@ -136,10 +136,35 @@ func GetLectureById(db *sql.DB, lecture_id int) (*models.Lecture, error) {
 	}
 	return &lecture, nil
 }
+func GetLecturesByStatus(db *sql.DB, lecture_status ...string) ([]models.Lecture, error) {
+	lectures := []models.Lecture{}
+	query := "SELECT lecture_id, lecture_name, lecture_speaker, lecture_timestamp, lecture_manager, lecture_location, status FROM Lectures WHERE status = ?"
+
+	for _, status := range lecture_status {
+		rows, err := DB.Query(query, status)
+		if err != nil {
+			fmt.Printf("skip: %s\n", status)
+			continue
+		}
+		defer rows.Close()
+
+		for rows.Next() {
+			l := models.Lecture{}
+			err := rows.Scan(&l.Id, &l.Name, &l.Speaker, &l.Timestamp, &l.Manager, &l.Location, &l.Status)
+			if err != nil {
+				fmt.Printf("err: %s\n", err)
+				return nil, err
+			}
+			lectures = append(lectures, l)
+		}
+	}
+	return lectures, nil
+
+}
 
 func GetAnnouncementList(db *sql.DB) ([]models.Announce, error) {
 	announces := []models.Announce{}
-	query := "SELECT announce_id, announce_title, announce_content, announce_time FROM Announcements"
+	query := "SELECT announce_id, announce_title, announce_content, announce_date FROM Announcements"
 	rows, err := DB.Query(query)
 	if err != nil {
 		return nil, err
@@ -148,7 +173,7 @@ func GetAnnouncementList(db *sql.DB) ([]models.Announce, error) {
 
 	for rows.Next() {
 		announce := models.Announce{}
-		err := rows.Scan(&announce.Id, &announce.Title, &announce.Content, &announce.Time)
+		err := rows.Scan(&announce.Id, &announce.Title, &announce.Content, &announce.Date)
 		if err != nil {
 			return nil, err
 		}

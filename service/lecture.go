@@ -50,3 +50,14 @@ func AddLecture(c *gin.Context) {
 	c.HTML(http.StatusCreated, "Lecture_manage.html", nil)
 	return
 }
+
+func ListLectures(c *gin.Context) {
+	lectures, err := db.GetLecturesByStatus(DB, "0", "1", "2")
+
+	if err != nil {
+		fmt.Print("error!\n")
+		c.JSON(http.StatusBadRequest, err)
+		return
+	}
+	c.JSON(http.StatusFound, lectures)
+}

@@ -185,6 +185,11 @@ func RedirectByPermission(c *gin.Context, user models.User) {
 		session.Set("redirect_url", "/webpage/Professer/professer.html")
 		session.Save()
 		c.Redirect(http.StatusFound, "/webpage/Professer/professer.html")
+	case "4":
+		session.Set("redirect_url", "/webpage/Assistant/assistant.html")
+		session.Save()
+		c.Redirect(http.StatusFound, "/webpage/Assistant/assistant.html")
+
 	default:
 		c.HTML(http.StatusForbidden, "login.html", gin.H{
 			"error": "未知的使用者角色",

@@ -1,0 +1,17 @@
+本次commit主要是Lectures的呼叫及調整資料庫（主要是後端，前端尚未測試）
+
+修改內容：
+    前端新增
+        assistant.html，作為全新的角色來渲染對應的內容（但是大部分內容還沒有改好）
+
+    伺服器端新增
+        db.GetLecturesByStatus()，用lecture.status的屬性來獲取資料庫中需要的資料
+        service.ListLecture()，作為一個component被呼叫，當前端需要列出講座列表時，可以用這隻函數
+        
+    
+    調整databases.db內的資料
+        在Permissions表中新增了「講座管理人員」的資料，以4為作為FK代表
+        在Lectures中新增一項"staus"屬性，可以知道講座的狀態：0:未開始, 1:進行中, 2:已結束
+        新增一項Announcements資料表，之前有加，但是不知道為什麼被蓋掉了
+
+        
