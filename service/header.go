@@ -28,32 +28,76 @@ func HeaderResetPassword(c *gin.Context) {
 	log.Println("user_id: ", user_id)
 	log.Println("user_id_log: ", ok)
 	log.Println("user_err", err)
+	role, ok := session.Get("role").(string)
 	if !ok {
-		c.HTML(http.StatusInternalServerError, "student.html", gin.H{
-			"error": "無效的 user_id",
-		})
-		return
+		switch role {
+		case "1":
+			c.HTML(http.StatusInternalServerError, "student.html", gin.H{
+				"error": "無效的 user_id",
+			})
+			return
+		case "3":
+			c.HTML(http.StatusInternalServerError, "professor.html", gin.H{
+				"error": "無效的 user_id",
+			})
+			return
+		case "2":
+			c.HTML(http.StatusInternalServerError, "manager.html", gin.H{
+				"error": "無效的 user_id",
+			})
+			return
+		}
 	}
 
 	// 從前端請求獲取更改密碼的資料
 	requestBody, err := HeaderResetPasswordRequest(c)
 	if err != nil {
-		c.HTML(http.StatusBadRequest, "hstudent.html", gin.H{
-			"error": err,
-			"user":  user,
-		})
-		return
+		switch role {
+		case "1":
+			c.HTML(http.StatusBadRequest, "student.html", gin.H{
+				"error": err,
+				"user":  user,
+			})
+			return
+		case "3":
+			c.HTML(http.StatusBadRequest, "professor.html", gin.H{
+				"error": err,
+				"user":  user,
+			})
+			return
+		case "2":
+			c.HTML(http.StatusBadRequest, "manager.html", gin.H{
+				"error": err,
+				"user":  user,
+			})
+			return
+		}
 	}
 
 	// 密碼驗證
 	err = validatePasswordMatch(requestBody.Password, requestBody.ConfirmPassword)
 	log.Println("new_old_password_err: ", err)
 	if err != nil {
-		c.HTML(http.StatusBadRequest, "student.html", gin.H{
-			"error": err,
-			"user":  user,
-		})
-		return
+		switch role {
+		case "1":
+			c.HTML(http.StatusBadRequest, "student.html", gin.H{
+				"error": err,
+				"user":  user,
+			})
+			return
+		case "3":
+			c.HTML(http.StatusBadRequest, "professor.html", gin.H{
+				"error": err,
+				"user":  user,
+			})
+			return
+		case "2":
+			c.HTML(http.StatusBadRequest, "manager.html", gin.H{
+				"error": err,
+				"user":  user,
+			})
+			return
+		}
 	}
 
 	// hash password
@@ -62,26 +106,56 @@ func HeaderResetPassword(c *gin.Context) {
 	// 更新數據庫中的密碼
 	err = db.UpdatePasswordByUserid(DB, user_id, hashedPassword)
 	if err != nil {
-		c.HTML(http.StatusBadRequest, "student.html", gin.H{
-			"error": err,
-			"user":  user,
-		})
+		switch role {
+		case "1":
+			c.HTML(http.StatusBadRequest, "student.html", gin.H{
+				"error": err,
+				"user":  user,
+			})
+			return
+		case "3":
+			c.HTML(http.StatusBadRequest, "professor.html", gin.H{
+				"error": err,
+				"user":  user,
+			})
+			return
+		case "2":
+			c.HTML(http.StatusBadRequest, "manager.html", gin.H{
+				"error": err,
+				"user":  user,
+			})
+			return
+		}
 	}
 
 	// 清除 session
 	c.SetCookie("session", "", -1, "/", "localhost", false, true)
 	
-	c.HTML(http.StatusOK, "student.html", gin.H{
-		"message": "密碼重設成功，請重新登入",
-	})
+	switch role {
+	case "1":
+		c.HTML(http.StatusOK, "student.html", gin.H{
+			"message": "密碼重設成功，請重新登入",
+		})
+	case "3":
+		c.HTML(http.StatusOK, "professor.html", gin.H{
+			"message": "密碼重設成功，請重新登入",
+		})
+	case "2":
+		c.HTML(http.StatusOK, "manager.html", gin.H{
+			"message": "密碼重設成功，請重新登入",
+		})
+	}
 }
 
 // 登出功能
 func Logout(c *gin.Context) {
+	var message string
 	// 清除 session
 	c.SetCookie("session", "", -1, "/", "localhost", false, true)
-	c.HTML(http.StatusOK, "student.html", gin.H{
-		"message": "您已成功登出",
+	
+	message = "您已成功登出"
+	c.JSON(http.StatusOK, gin.H{
+		"message": message,
 	})
 }
 

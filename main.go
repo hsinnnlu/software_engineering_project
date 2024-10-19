@@ -46,7 +46,7 @@ func main() {
 
 	// 針對header的路由
 	router.POST("/Header_change_password", service.HeaderResetPassword)
-	router.POST("/logout", service.Logout) // 2024.10.10 登出
+	router.POST("/logout", service.Logout)
 
 	// 針對學生的路由
 	// 主頁面
