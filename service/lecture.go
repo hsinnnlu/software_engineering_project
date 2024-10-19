@@ -48,7 +48,6 @@ func AddLecture(c *gin.Context) {
 	}
 
 	c.HTML(http.StatusCreated, "Lecture_manage.html", nil)
-	return
 }
 
 func ListLectures(c *gin.Context) {

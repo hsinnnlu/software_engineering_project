@@ -18,7 +18,8 @@ func main() {
 	router.Use(auth.InitSession("secret"))
 
 	// 設定靜態文件路由
-	router.Static("/style.css", "./style.css")
+	// router.Static("/style.css", "./style.css")
+	router.Static("/css", "./webpage/css")
 	router.Static("/picture", "./picture")
 
 	// 加載 HTML 模板
