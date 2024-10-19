@@ -7,31 +7,89 @@
     <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.1/dist/js/bootstrap.bundle.min.js" integrity="sha384-/bQdsTh/da6pkI1MST/rWKFNjaCP5gBSY4sEBT38Q/9RBh9AH40zEOg7Hlq2THRZ" crossorigin="anonymous"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-    <title>Attendent Sheet</title>
+    <title>Check in</title>
 
-    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="/css/style.css">
 </head>
-<body style="background-color: rgb(148, 237, 137);">
+<body id="background" style="background-color: #E1E2E2">
     <div class="container" style="height: 80vh;">
         <div class="row mt-3 d-flex border-bottom border-dark">
-            <div class="col-md-4 h3"><a href="Check_out.html">切換為簽退</a></div>
+            <div class="col-md-4 h3"><a href="#" id="Switch_mode">切換為簽退</a></div>
             <div class="col-md-4">AI智變未來 - 擁抱AI科技，共創AI新時代</div>
             <div class="col-md-3 d-flex align-items-center justify-content-end">
                 <div class="me-2">2024/05/19</div>
                 <div>14:00:30</div>
             </div>
             <div class="col-md-1 h3 text-end" data-bs-toggle="modal" data-bs-target="#Quit"><a href="#">退出</a></div>
+            <!-- 退出 -->
+            <div class="modal fade" id="Quit" tabindex="-1" aria-labelledby="QuitLabel" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content">
+                        <div class="modal-header d-flex justify-content-center">
+                            <div class="modal-title h1" id="QuitLabel">確認退出</div>
+                        </div>
+                        <div class="modal-body text-center">
+                            <button type="button" data-bs-dismiss="modal" aria-label="Close" class="btn border-dark">返回</button>
+                            <a href="Lecture_CheckIn.html"><button type="button" class="btn btn-danger">確認</button></a>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
+
         <div class="row h-100 mt-4">
             <div class="col">
                 <div class="d-flex py-2" >
                     <input type="search" placeholder="輸入學號">
-                    <button type="submit" class="btn custom-btn">簽到</button>
+                    <button type="submit" class="btn custom-btn" id="Check_in_Btn">簽到</button>
                 </div>
                 <button class="btn custom-btn" data-bs-toggle="modal" data-bs-target="#Record">查看簽到退記錄表</button>
-                <div class="Record"></div>
+
+                <!-- 簽到退記錄表 -->
+                <div class="modal fade" id="Record" tabindex="-1" aria-labelledby="RecordLabel" aria-hidden="true">
+                    <div class="modal-dialog modal-dialog-centered">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="RecordLabel">簽到退紀錄表</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <div class="d-flex justify-content-end">
+                                    <input type="search" placeholder="請輸入關鍵字">
+                                    <button type="submit" class="btn custom-btn border-dark"><i class="bi bi-search"></i></button>
+                                </div>
+                                <div class="table-responsive" style="max-height: 90%; overflow-y: auto;">
+                                    <table class="table text-center">
+                                        <thead>
+                                            <tr>
+                                                <th scope="col">時間</th>
+                                                <th scope="col">學號</th>
+                                                <th scope="col">姓名</th>
+                                                <th scope="col">狀態</th>
+                                                <th scope="col">雲端同步</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <th>14:00:30</th>
+                                                <td>s1135xxxx</td>
+                                                <td>王xx</td>
+                                                <td>簽到</td>
+                                                <td><div class="greencircle"></div></td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button class="btn custom-btn border-primary"><i class="bi bi-arrow-repeat"></i>上傳雲端</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
             </div>
-            <div class="col text-center h1 align-self-center fw-bold">
+            <div class="col text-center h1 align-self-center fw-bold" id="show_results">
                 <div>學生姓名</div>
                 <div>學號</div>
                 <div>2024/05/19</div>
@@ -64,9 +122,29 @@
                 <div class="my-2">                
                     <button class="btn custom-btn"><i class="bi bi-arrow-repeat"></i>上傳雲端</button>
                 </div>
+
+                <!-- 測試按鈕 -->
+                <button class="btn btn-success" id="success" onclick="Switch_to_success()">簽到成功</button>
+                <button class="btn btn-danger" id="fail" onclick="Switch_to_fail()">簽到失敗</button>
+                <button class="btn btn-danger" id="fail" onclick="Not_check_in()">未簽到</button>
             </div>
         </div>
     </div>
     <script src="../js/Check_in.js"></script>
 </body>
 </html>
+<script>
+    //測試按鈕
+    function Not_check_in(){
+        document.getElementById("background").style.backgroundColor = "#FFA1A1";
+        document.getElementById("show_results").innerHTML = "<div>尚未簽到</div> <div>請聯絡負責人</div>";
+    }
+    function Switch_to_fail(){
+        document.getElementById("background").style.backgroundColor = "#FFA1A1";
+        document.getElementById("show_results").innerHTML = "<div>無效條碼</div> <div>請再試一次</div>";
+    }
+    function Switch_to_success(){
+        document.getElementById("background").style.backgroundColor = "#A0EB96";
+        document.getElementById("show_results").innerHTML = "<div>學生姓名</div> <div>學號</div> <div>2024/05/19</div> <div>14:00:30</div>"
+    }
+</script>
