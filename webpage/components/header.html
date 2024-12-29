@@ -200,9 +200,10 @@
         axios.post('http://localhost:8080/logout')
             .then(response => {
                 // 處理成功的響應
-                alert(response.data.message); // 提示登出成功消息
-                // 可以選擇重定向到登入頁面或首頁
-                window.location.href = '/login'; // 替換為你的登入頁面 URL
+                var message = response.data.message;
+                alert(message); // 提示登出成功消息
+                // 可以選擇重定向到登入頁面
+                window.location.href = '/login';
             })
             .catch(error => {
                 // 處理錯誤的響應
@@ -210,15 +211,4 @@
                 alert('登出失敗，請重試！');
             });
     });
-
-  // 顯示彈跳視窗和重定向
-  window.onload = function() {
-      var message = "{{ .message }}"; // 從後端獲取訊息
-      if (message) {
-          // 顯示對話框
-          alert(message);
-          // 確認後重定向到登入頁面
-          window.location.href = "/login";
-      }
-  };
 </script>

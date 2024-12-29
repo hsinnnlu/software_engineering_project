@@ -1,8 +1,9 @@
+// 通知的頁面
 package models
 
 type Announce struct {
-	Id      int    `json:"id"`
-	Title   string `json:"title"`
-	Content string `json:"content"`
-	Date    string `json:"date"`
+	Announce_id		 int    `json:"id"`
+	Announce_title   string `json:"title"`
+	Announce_content string `json:"content"`
+	Announce_date    string `json:"date"`
 }
