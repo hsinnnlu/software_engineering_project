@@ -12,7 +12,7 @@ func Authlecture(lecture_id string) error {
 
 	query := `SELECT lecture_name FROM Lectures WHERE lecture_id = ?`
 	err := db.DB.QueryRow(query, lecture_id).Scan(&lecture)
-	
+
 	if err == sql.ErrNoRows {
 		fmt.Printf("err: %s\n", err)
 		return nil // 用戶不存在
@@ -51,6 +51,81 @@ func GetActiveLectures() ([]struct{ ID, Name string }, error) {
 	}
 
 	return lectures, nil
+}
+
+func InsertStudentIn(userID, lectureID, signInTime, signOutTime string) error {
+	// 檢查記錄是否已存在
+	queryCheck := `SELECT COUNT(*) FROM Users_Lectures WHERE user = ? AND lecture = ?`
+	var count int
+	err := db.DB.QueryRow(queryCheck, userID, lectureID).Scan(&count)
+	if err != nil {
+		fmt.Printf("Check error: %s\n", err)
+		return err
+	}
+
+	if count > 0 {
+		// 更新簽到時間
+		queryUpdate := `UPDATE Users_Lectures SET sign_out_time = ? WHERE user = ? AND lecture = ?`
+		_, err = db.DB.Exec(queryUpdate, signOutTime, userID, lectureID)
+		if err != nil {
+			fmt.Printf("Update error: %s\n", err)
+			return err
+		}
+		return nil
+	}
+
+	if count > 0 {
+		// 更新簽到時間
+		queryUpdate := `UPDATE Users_Lectures SET sign_out_time = ? WHERE user = ? AND lecture = ?`
+		_, err = db.DB.Exec(queryUpdate, signOutTime, userID, lectureID)
+		if err != nil {
+			fmt.Printf("Update error: %s\n", err)
+			return err
+		}
+		return nil
+	}
+
+	// 插入新記錄
+	queryInsert := `INSERT INTO Users_Lectures (user, lecture, sign_in_time) VALUES (?, ?, ?)`
+	_, err = db.DB.Exec(queryInsert, userID, lectureID, signInTime)
+	if err != nil {
+		fmt.Printf("Insert error: %s\n", err)
+		return err
+	}
+
+	return nil
+}
+
+func InsertStudentOut(userID, lectureID, signOutTime, signInTime string) error {
+	// 檢查記錄是否已存在
+	queryCheck := `SELECT COUNT(*) FROM Users_Lectures WHERE user = ? AND lecture = ?`
+	var count int
+	err := db.DB.QueryRow(queryCheck, userID, lectureID).Scan(&count)
+	if err != nil {
+		fmt.Printf("Check error: %s\n", err)
+		return err
+	}
+
+	if count > 0 {
+		// 更新簽退時間
+		queryUpdate := `UPDATE Users_Lectures SET sign_in_time = ? WHERE user = ? AND lecture = ?`
+		_, err = db.DB.Exec(queryUpdate, signInTime, userID, lectureID)
+		if err != nil {
+			fmt.Printf("Update error: %s\n", err)
+			return err
+		}
+		return nil
+	}
+
+	// 插入新記錄
+	queryInsert := `INSERT INTO Users_Lectures (user, lecture, sign_out_time) VALUES (?, ?, ?)`
+	_, err = db.DB.Exec(queryInsert, userID, lectureID, signOutTime)
+	if err != nil {
+		fmt.Printf("Insert error: %s\n", err)
+		return err
+	}
+
+	return nil
 }
 
 // import (

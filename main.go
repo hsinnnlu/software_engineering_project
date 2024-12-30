@@ -35,13 +35,16 @@ func main() {
 		resetpasswdtoken.POST("/resetpasswd", handler.ResetpasswdChangepasswd)
 	}
 
+	r.POST("/:lecture_id/:user_id/sign-in", handler.Lecturehandler)
+	r.POST("/:lecture_id/:user_id/sign-out", handler.Lecturehandler)
+
 	// 身份驗證相關路由
 	authorized := r.Group("/")
 	authorized.Use(handler.AuthMiddleware())
 	{
 		authorized.POST("/announce", handler.Announcehandler)
 		authorized.POST("/lecture", handler.Lecturelisthandler)
-		authorized.POST("/:lecture_id/:user_id/:sign-in")
+		
 		// authorized.GET("/userinfo", service.GetUserProfile)
 		// authorized.GET("/userinfo", services.GetUserProfile)        // finished
 		// authorized.POST("/addVocab", handlers.AddVocabularyHandler) // 新增單字 //finished
