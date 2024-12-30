@@ -8,6 +8,7 @@ import (
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
 	"github.com/hsinnnlu/software_engineering_project/auth"
+	"github.com/hsinnnlu/software_engineering_project/db"
 	"gopkg.in/gomail.v2"
 )
 
@@ -87,6 +88,86 @@ func VerifylinkToken(URLtoken string) (jwt.MapClaims, error) {
 	return nil, errors.New("invalid token")
 }
 
+func ResetPassword(claims jwt.MapClaims, password string) error{
+	// 從 token 中提取 email
+	emailFromClaims, ok := claims["email"].(string)
+    if !ok || emailFromClaims == "" {
+        return fmt.Errorf("token 驗證失敗或無效的 email 資訊")
+    }
+
+	newPassword := auth.HashPassword(password)
+	
+
+	// 更新數據庫中的密碼
+	query := "UPDATE users SET password_hash = ? WHERE user_email = ?"
+	_, err := db.DB.Exec(query, newPassword, emailFromClaims)
+	if err != nil {
+        return fmt.Errorf("密碼更新失敗: %v", err)
+    }
+
+	return nil
+}
+
+// func ResetPassword(c *gin.Context) {
+// 	fmt.Println("pass ResetPassword")
+// 	// 取得用戶提交的密碼重設表單數據
+// 	requestBody, err := getResetPasswordRequestBody(c)
+// 	log.Println("requestBody: ", requestBody)
+// 	log.Println("requestBody_err: ", err)
+// 	if err != nil {
+// 		c.HTML(http.StatusBadRequest, "reset_password.html", gin.H{
+// 			"error": err.Error(),
+// 		})
+// 		return
+// 	}
+
+// 	newclaims, err := verifyToken(oldpassword, requestBody.Token)
+// 	log.Println("newclaims: ", newclaims)
+// 	log.Println("newclaims_err: ", err)
+// 	if err != nil {
+// 		c.HTML(http.StatusBadRequest, "reset_password.html", gin.H{
+// 			"error": "Token 驗證失敗或已過期",
+// 		})
+// 		return
+// 	}
+
+// 	// 檢查新密碼與確認密碼是否一致
+// 	err = validatePasswordMatch(requestBody.Password, requestBody.ConfirmPassword)
+// 	log.Println("new_old_password_err: ", err)
+// 	if err != nil {
+// 		c.HTML(http.StatusBadRequest, "reset_password.html", gin.H{
+// 			"error": err.Error(),
+// 		})
+// 		return
+// 	}
+
+// 	// 從 token 中提取 email
+// 	emailFromClaims, err := getEmailFromClaims(newclaims)
+// 	log.Println("emailFromClaims: ", emailFromClaims)
+// 	log.Println("emailFromClaims_err: ", err)
+// 	if err != nil {
+// 		c.HTML(http.StatusBadRequest, "reset_password.html", gin.H{
+// 			"error": "Token 驗證失敗或已過期",
+// 		})
+// 		return
+// 	}
+
+// 	hashedPassword := GetHashedPassword(requestBody.Password)
+
+// 	// 更新數據庫中的密碼
+// 	err = updatePasswordInDB(emailFromClaims, hashedPassword)
+// 	log.Println("updatedb_err: ", err)
+// 	if err != nil {
+// 		c.HTML(http.StatusInternalServerError, "reset_password.html", gin.H{
+// 			"error": "更新密碼失敗",
+// 		})
+// 		return
+// 	}
+
+// 	c.HTML(http.StatusOK, "reset_password.html", gin.H{
+// 		"message": "密碼重設成功，請重新登入",
+// 	})
+// }
 
 // import (
 // 	"errors"

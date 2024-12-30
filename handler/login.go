@@ -1,4 +1,4 @@
-// 2024.11.26 login 後端跟前端的接口
+// 2024.11.26 login 後端跟前端的接口 finished
 package handler
 
 import (
@@ -33,5 +33,5 @@ func LoginHandler(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"token": token, "permission": userPermission})
+	c.JSON(http.StatusOK, gin.H{"token": token, "user_id": input.Username, "permission": userPermission})
 }

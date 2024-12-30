@@ -51,17 +51,13 @@ func ResetpasswdVerifylinkHandler(c *gin.Context) {
 	}
 
 	// 驗證token
-	claims, err := service.VerifylinkToken(token)
+	_, err := service.VerifylinkToken(token)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"status":  "success",
-		"message": "Token verified successfully",
-		"data":    claims, // 將 claims 作為回應數據
-	})
+	c.JSON(http.StatusOK, gin.H{ "status":  "success"})
 }
 
 func ResetpasswdChangepasswd(c *gin.Context) {
@@ -70,10 +66,35 @@ func ResetpasswdChangepasswd(c *gin.Context) {
 		Compassword string `json:"compassword"`
 	}
 
+	token := c.Query("token")
+	if token == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid link"})
+		return
+	}
+
+	// 驗證token
+	claims, err := service.VerifylinkToken(token)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
+		return
+	}
+
 	// 前端的資料是否有空值
 	if err := c.BindJSON(&changepasswd_input); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input"})
 		return
 	}
 
+	if changepasswd_input.Compassword != changepasswd_input.Password{
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Compassword and Password are not equel."})
+		return
+	}
+
+	err = service.ResetPassword(claims, changepasswd_input.Password)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "reset password error"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{ "status":  "success"})
 }
