@@ -53,7 +53,7 @@ func GetActiveLectures() ([]struct{ ID, Name string }, error) {
 	return lectures, nil
 }
 
-func InsertStudentIn(userID, lectureID, signInTime, signOutTime string) error {
+func InsertStudentIn(userID, lectureID, signInTime string) error {
 	// 檢查記錄是否已存在
 	queryCheck := `SELECT COUNT(*) FROM Users_Lectures WHERE user = ? AND lecture = ?`
 	var count int
@@ -65,19 +65,8 @@ func InsertStudentIn(userID, lectureID, signInTime, signOutTime string) error {
 
 	if count > 0 {
 		// 更新簽到時間
-		queryUpdate := `UPDATE Users_Lectures SET sign_out_time = ? WHERE user = ? AND lecture = ?`
-		_, err = db.DB.Exec(queryUpdate, signOutTime, userID, lectureID)
-		if err != nil {
-			fmt.Printf("Update error: %s\n", err)
-			return err
-		}
-		return nil
-	}
-
-	if count > 0 {
-		// 更新簽到時間
-		queryUpdate := `UPDATE Users_Lectures SET sign_out_time = ? WHERE user = ? AND lecture = ?`
-		_, err = db.DB.Exec(queryUpdate, signOutTime, userID, lectureID)
+		queryUpdate := `UPDATE Users_Lectures SET sign_in_time = ? WHERE user = ? AND lecture = ?`
+		_, err = db.DB.Exec(queryUpdate, signInTime, userID, lectureID)
 		if err != nil {
 			fmt.Printf("Update error: %s\n", err)
 			return err
@@ -96,7 +85,7 @@ func InsertStudentIn(userID, lectureID, signInTime, signOutTime string) error {
 	return nil
 }
 
-func InsertStudentOut(userID, lectureID, signOutTime, signInTime string) error {
+func InsertStudentOut(userID, lectureID, signOutTime string) error {
 	// 檢查記錄是否已存在
 	queryCheck := `SELECT COUNT(*) FROM Users_Lectures WHERE user = ? AND lecture = ?`
 	var count int
@@ -108,8 +97,8 @@ func InsertStudentOut(userID, lectureID, signOutTime, signInTime string) error {
 
 	if count > 0 {
 		// 更新簽退時間
-		queryUpdate := `UPDATE Users_Lectures SET sign_in_time = ? WHERE user = ? AND lecture = ?`
-		_, err = db.DB.Exec(queryUpdate, signInTime, userID, lectureID)
+		queryUpdate := `UPDATE Users_Lectures SET sign_out_time = ? WHERE user = ? AND lecture = ?`
+		_, err = db.DB.Exec(queryUpdate, signOutTime, userID, lectureID)
 		if err != nil {
 			fmt.Printf("Update error: %s\n", err)
 			return err

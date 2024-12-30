@@ -32,7 +32,7 @@ func Lecturehandler(c *gin.Context) {
 	// 根據業務邏輯處理
 	if input.Status == "in" {
 		// 執行簽到邏輯
-		err := service.InsertStudentIn(userID, lectureID, input.Sign_in_time, input.Sign_out_time)
+		err := service.InsertStudentIn(userID, lectureID, input.Sign_in_time)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to sign in"})
 			return
@@ -43,7 +43,7 @@ func Lecturehandler(c *gin.Context) {
 
 	if input.Status == "out" {
 		// 執行簽退邏輯
-		err := service.InsertStudentIn(userID, lectureID, input.Sign_out_time, input.Sign_in_time)
+		err := service.InsertStudentOut(userID, lectureID, input.Sign_out_time)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to sign out"})
 			return
