@@ -94,7 +94,25 @@ export default {
         // 如果登入成功
         // alert("登入成功！");
         localStorage.setItem("token", response.data.token); // 儲存 JWT Token
-        localStorage.setItem("role", response.data.permission) // 存身份
+        let role;
+        switch(response.data.permission){
+          case "1":
+            role = "student";
+            break;
+          case "2":
+            role = "manager";
+            break;
+          case "3":
+            role = "professor";
+            break;
+          case "4":
+            role = "assistant";
+            break;
+          default:
+            role = "guest";
+            break;
+        }
+        localStorage.setItem("role", role) // 存身份
         
 
         // this.$router.push("/")

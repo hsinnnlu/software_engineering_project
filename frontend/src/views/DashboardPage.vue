@@ -23,7 +23,7 @@
           </li>
           <li v-if="role === 'assistant'" class="nav-item">
             <router-link to="/assistant" class="nav-link text-primary">管理簽到退系統</router-link>
-            <!-- 自己做測試用的 -->
+            <!-- 自己做測試用的路由 -->
             <router-link to="/checking" class="nav-link text-primary">開發者測試環境按鈕</router-link>
           </li>
           <li v-if="role === 'teacher'" class="nav-item">
@@ -36,6 +36,7 @@
       <div class="col-md-9 content p-3">
         <div v-if="role === 'student'" class="student-content">
           <h5>學生專屬內容</h5>
+
           <p>這裡顯示學生專屬資料或功能。</p>
         </div>
         <div v-if="role === 'manager'" class="admin-content">
@@ -56,6 +57,7 @@
 </template>
 
 <script>
+
 export default {
   props: {
     username: {
