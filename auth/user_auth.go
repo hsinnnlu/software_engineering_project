@@ -29,7 +29,7 @@ func AuthenticateUser(username, password string) (string, bool, error) {
 		return "", false, err // 一些奇怪的錯誤報錯
 	}
 
-	newPassword := hashPassword(password)
+	newPassword := HashPassword(password)
 	// 比較哈希值
 	if hashedPassword != newPassword {
 		return "", false, nil // 密碼不匹配
@@ -38,23 +38,23 @@ func AuthenticateUser(username, password string) (string, bool, error) {
 }
 
 func AuthenticateEmail(email string) (string, bool, error) {
-	var user_Id string
-	var hashedPassword string
+    var hashedPassword string
 
-	query := `SELECT user_id password_hash FROM Users WHERE user_email = ?`
-	err := db.DB.QueryRow(query, email).Scan(&user_Id, &hashedPassword)
-	if err == sql.ErrNoRows {
-		fmt.Printf("err: %s\n", err)
-		return "", false, nil // email不存在
-	} else if err != nil {
-		fmt.Printf("err: %s\n", err)
-		return "", false, err // 一些奇怪的錯誤報錯
-	}
+    query := `SELECT password_hash FROM Users WHERE user_email = ?`
+    err := db.DB.QueryRow(query, email).Scan(&hashedPassword)
+    if err == sql.ErrNoRows {
+        // email 不存在
+        return "", false, nil
+    } else if err != nil {
+        // 其他錯誤
+        return "", false, fmt.Errorf("查詢錯誤: %w", err)
+    }
 
-	return hashedPassword, true, nil
+    // 返回結果
+    return hashedPassword, true, nil
 }
 
-func hashPassword(password string) string {
+func HashPassword(password string) string {
 	hash := sha256.New()
 	hash.Write([]byte(password))
 	return hex.EncodeToString(hash.Sum(nil)) // 以十六進制字串形式返回哈希值

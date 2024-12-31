@@ -26,13 +26,25 @@ func main() {
 		MaxAge:           12 * time.Hour, // OPTIONS 請求的緩存時間
 	}))
 
-	r.POST("/login", handler.LoginHandler)       // finished
+	r.POST("/login", handler.LoginHandler) // finished (back, front)
+	r.POST("/sendemail", handler.ResetpasswdSendlinkHandler)
 
-	
+	resetpasswdtoken := r.Group("/")
+	resetpasswdtoken.Use(handler.ResetpasswdVerifylinkHandler) // 尚未測試（之後再說）
+	{
+		resetpasswdtoken.POST("/resetpasswd", handler.ResetpasswdChangepasswd)
+	}
+
+	r.POST("/:lecture_id/:user_id/sign-in", handler.Lecturehandler)
+	r.POST("/:lecture_id/:user_id/sign-out", handler.Lecturehandler)
+
 	// 身份驗證相關路由
 	authorized := r.Group("/")
 	authorized.Use(handler.AuthMiddleware())
 	{
+		authorized.POST("/announce", handler.Announcehandler)
+		authorized.POST("/lecture", handler.Lecturelisthandler)
+		
 		// authorized.GET("/userinfo", service.GetUserProfile)
 		// authorized.GET("/userinfo", services.GetUserProfile)        // finished
 		// authorized.POST("/addVocab", handlers.AddVocabularyHandler) // 新增單字 //finished
