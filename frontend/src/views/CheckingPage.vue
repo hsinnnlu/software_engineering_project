@@ -2,7 +2,8 @@
   <div class="checking-page">
     <!-- 頂部區域 -->
     <header class="d-flex justify-content-between align-items-center p-2 bg-light border-bottom">
-      <a href="#" class="text-primary fw-bold">切換為簽退</a>
+      <a v-if="this.isSignIn" href="#" class="text-primary fw-bold" @:click="switchStatus">切換為簽退</a>
+      <a v-else href="#" class="text-primary fw-bold" @:click="switchStatus">切換為簽到</a>
       <span>AI智慧未來 - 擁抱AI科技，共創AI新時代</span>
       <span>{{ currentTime }}</span>
       <a href="#" class="text-primary fw-bold">登出</a>
@@ -11,6 +12,7 @@
     <!-- 主要內容區 -->
     <main class="container my-4">
       <div class="row h-100 mt-4">
+        <!-- 左上：輸入學號 + 按鈕 -->
         <div class="col-md-2">
           <div class="input-group mb-3">
             <input
@@ -19,12 +21,14 @@
               placeholder="輸入學號"
               v-model="studentId"
             />
-            <button class="btn btn-primary" @click="handleCheckIn">簽到</button>
+            <button class="btn btn-primary" @click="handleCheckIn">
+              簽到
+            </button>
           </div>
         </div>
-        <!-- 左側輸入框與資訊 -->
+
+        <!-- 中間：學生資訊置中區域 -->
         <div class="col-md-8">
-          <!-- 學生資訊置中區域 -->
           <div class="student-info text-center">
             <h2 class="fw-bold">{{ studentName }}</h2>
             <h3>{{ studentId }}</h3>
@@ -33,18 +37,12 @@
           </div>
         </div>
 
-        <!-- 即時顯示彈跳視窗按鈕 -->
+        <!-- 右上：查看簽到退記錄表(Modal)按鈕 -->
         <div class="col-md-2 d-flex align-items-start justify-content-end">
           <button class="btn btn-outline-primary" @click="showModal = true">
             查看簽到退記錄表
           </button>
         </div>
-      </div>
-
-      <!-- 底部按鈕 -->
-      <div class="mt-4 text-center">
-        <button class="btn btn-success mx-2">簽到成功</button>
-        <button class="btn btn-danger mx-2">簽到失敗</button>
       </div>
     </main>
 
@@ -64,10 +62,11 @@
             <button type="button" class="btn-close" @click="closeModal"></button>
           </div>
           <div class="modal-body">
-            <!-- 原先的即時顯示區域 -->
+            <!-- 即時顯示區域 -->
             <table class="table table-bordered text-center">
               <thead>
                 <tr>
+                  <th>狀態</th>
                   <th>時間</th>
                   <th>學號</th>
                   <th>姓名</th>
@@ -76,6 +75,7 @@
               </thead>
               <tbody>
                 <tr v-for="record in records" :key="record.id">
+                  <td>{{ record.status }}</td>
                   <td>{{ record.time }}</td>
                   <td>{{ record.studentId }}</td>
                   <td>{{ record.studentName }}</td>
@@ -103,30 +103,34 @@
 </template>
 
 <script>
+import axios from 'axios';
+
 export default {
   data() {
     return {
       // 畫面顯示的資料
       lectureName: "",
       studentId: "", // 輸入的學號
-      studentName: "學生", // 模擬的學生姓名
+      studentName: "", // 學生名稱：待改進（後端必須回傳名字才能紀錄）
+      lecture_id: "1",
+      isSignIn: true, 
       
-      // 簽到 資料
+      // 簽到資料
       records: [
         // 範例資料
         {
-          id: 1, // 內部顯示 id
+          id: 1,            // 內部顯示 id
+          status: "簽到",
           time: "14:00:30", // 簽到時間
           studentId: "s1135xxxx", // 學號
-          studentName: "王xx", // 名稱
-          synced: true, // 是否同步
+          studentName: "王xx",    // 名稱
+          synced: true,     // 是否同步
         },
       ],
-      currentTime: "", // 當前時間
-      showModal: false, // 控制彈跳視窗顯示/隱藏
+      currentTime: "",   // 當前時間
+      showModal: false,  // 控制彈跳視窗顯示/隱藏
     };
   },
-  // 會一直重複執行的東東
   computed: {
     // 格式化的當前日期
     formattedDate() {
@@ -139,35 +143,93 @@ export default {
   },
   methods: {
     // 處理手動簽到功能
-    handleCheckIn() {
+    async handleCheckIn() {
       if (!this.studentId) {
         alert("請輸入學號");
         return;
       }
-      // 添加新的簽到記錄 ！！
+      const status = (this.isSignIn) ? "in" : "out";
+
+
+      // 先把資料加入前端顯示的 records
       const newRecord = {
         id: this.records.length + 1,
+        status: (status=="in") ? "簽到" : "簽退",
         time: new Date().toLocaleTimeString(),
         studentId: this.studentId,
-        studentName: this.studentName,
+        // studentName: this.studentName,
         synced: false,
       };
+
       this.records.push(newRecord);
-      this.studentId = ""; // 清空輸入框
+      // 再呼叫 API 將資料送到後端
+      try {
+        await this.sendCheckInRequest(status);
+        
+        // 更新同步狀況
+        this.records[this.records.length - 1].synced = true;
+        // 待改進
+        if(this.isSignIn){
+          this.studentId = "簽到成功"; 
+        } else {
+          this.studentId = "簽退成功";
+        }
+        
+      } catch (error) {
+        alert("簽到資料送出失敗！");
+        console.error(error);
+      }
+
+      // 延遲顯示
+      setTimeout(()=>{this.studentId=""}, 2000);
+
     },
-    // 模擬同步數據 ！！
+    // 實際送出簽到的請求 (sign_in)
+    async sendCheckInRequest(Status) {
+      // 準備要送出的資料結構 { sign_in_time, sign_out_time, status }
+      const now = new Date().toISOString();
+      const token = localStorage.getItem("token");
+      const requestBody = {
+        sign_in_time: now,
+        sign_out_time: null,  // 簽到時先給空字串或 null
+        status: Status,  // 用來區分簽到或簽退
+      };
+
+      try{
+        await axios.post(
+          `/${this.lecture_id}/`+`${this.studentId}/sign-in`,
+          requestBody,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+      } catch(error){
+        throw new Error("Network response was not ok");
+      }
+    },
+  
+    
+
+    // 模擬「查看簽到退記錄表」的資料同步
     syncData() {
       alert("數據已同步到雲端！");
       this.records.forEach((record) => (record.synced = true)); // 標記同步完成
     },
+
+    // 開關彈跳視窗
+    closeModal() {
+      this.showModal = false;
+    },
+
+    // 切換模式
+    switchStatus(){
+      this.isSignIn = !this.isSignIn;
+    },
+
     // 更新當前時間
     updateTime() {
       const now = new Date();
       this.currentTime = now.toLocaleTimeString();
-    },
-    // 開關彈跳視窗
-    closeModal() {
-      this.showModal = false;
     },
   },
   mounted() {

@@ -23,6 +23,7 @@ func Lecturehandler(c *gin.Context) {
 	// 綁定 JSON 資料
 	if err := c.BindJSON(&input); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input"})
+		fmt.Printf("error: %s\n", err)
 		return
 	}
 
@@ -37,6 +38,7 @@ func Lecturehandler(c *gin.Context) {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to sign in"})
 			return
 		}
+
 		c.JSON(http.StatusOK, gin.H{"message": "Signed in successfully"})
 		return
 	}
