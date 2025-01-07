@@ -45,8 +45,10 @@ func main() {
 		authorized.POST("/announce", handler.Announcehandler)
 		authorized.POST("/lecture", handler.Lecturelisthandler) // finished
 
-		// 修改講座資訊（ manager） 臨時寫的lambda 快速建構用的
+		// 修改講座資訊（ manager）快速建構用，沒有分層次
 		authorized.POST("edit-lecture", handler.EditLecture)
+		authorized.POST("add-lecture", handler.AddLecture)
+
 		// authorized.GET("/userinfo", service.GetUserProfile)
 		// authorized.GET("/userinfo", services.GetUserProfile)        // finished
 		// authorized.POST("/addVocab", handlers.AddVocabularyHandler) // 新增單字 //finished

@@ -59,7 +59,7 @@ func Lecturehandler(c *gin.Context) {
 	c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid status"})
 }
 
-// 修改表單
+// 修改講座
 func EditLecture(c *gin.Context) {
 	permission, exist := c.Get("permission")
 	// 驗證身份
@@ -83,6 +83,8 @@ func EditLecture(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request", "details": err.Error()})
 		return
 	}
+
+	fmt.Printf("req: %v\n", req)
 
 	// UPDATE 資料庫
 	query := `UPDATE Lectures SET lecture_name = ?, lecture_timestamp = ?, lecture_location = ? WHERE lecture_id = ?`
@@ -109,5 +111,63 @@ func EditLecture(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"message": "Lecture updated successfully",
 		"lecture": req,
+	})
+}
+
+// 新增講座
+func AddLecture(c *gin.Context) {
+	role, exist := c.Get("permission")
+	adder, exist := c.Get("username")
+
+	// 驗證身份
+	if !exist || role != "2" {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+
+	// 定義接收表單的結構
+	type EditLectureRequest struct {
+		Title   string `json:"title" binding:"required"`   // 講座名稱
+		Date    string `json:"date" binding:"required"`    // 講座日期
+		Time    string `json:"time" binding:"required"`    // 講座時間
+		Place   string `json:"place" binding:"required"`   // 講座地點
+		Speaker string `json:"speaker" binding:"required"` // 講師
+	}
+
+	// 接收 JSON 請求
+	var req EditLectureRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request", "details": err.Error()})
+		return
+	}
+
+	fmt.Printf("req: %v\n", req)
+
+	query := `INSERT INTO Lectures (lecture_name, lecture_timestamp, lecture_location, lecture_speaker, lecture_manager, status) VALUES (?, ?, ?, ?, ?, ?)`
+	res, err := db.DB.Exec(query, req.Title, req.Date+"T"+req.Time, req.Place, req.Speaker, adder, 1)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to add lecture", "details": err.Error()})
+		fmt.Printf("error: %s\n", err)
+		return
+	}
+
+	// 獲取新插入的 ID
+	lastInsertID, err := res.LastInsertId()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve new lecture ID", "details": err.Error()})
+		return
+	}
+
+	// 回傳新增的講座數據
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Lecture added successfully",
+		"lecture": gin.H{
+			"id":      lastInsertID,
+			"title":   req.Title,
+			"date":    req.Date,
+			"time":    req.Time,
+			"place":   req.Place,
+			"speaker": req.Speaker,
+		},
 	})
 }

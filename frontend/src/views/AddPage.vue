@@ -20,15 +20,18 @@
             <div class="modal-body">
               <label>講座名稱</label>
               <input v-model="newLecture.title" class="form-control" />
-  
+
               <label>日期</label>
               <input v-model="newLecture.date" class="form-control" />
-  
+
               <label>時間</label>
               <input v-model="newLecture.time" class="form-control" />
-  
+
               <label>地點</label>
               <input v-model="newLecture.place" class="form-control" />
+
+              <label>講師</label>
+              <input v-model="newLecture.speaker" class="form-control" />
             </div>
             <div class="modal-footer">
               <button class="btn btn-secondary" @click="showModal = false">取消</button>
@@ -54,16 +57,18 @@
             <div class="modal-body">
               <label>講座名稱</label>
               <input v-model="editLectureForm.title" class="form-control" />
-  
+
               <label>日期</label>
               <input v-model="editLectureForm.date" class="form-control" />
-  
+
               <label>時間</label>
               <input v-model="editLectureForm.time" class="form-control" />
-  
+
               <label>地點</label>
               <input v-model="editLectureForm.place" class="form-control" />
-  
+
+              <label>講師</label>
+              <input v-model="editLectureForm.speaker" class="form-control" />
             </div>
             <div class="modal-footer">
               <button class="btn btn-secondary" @click="cancelEditLecture">取消</button>
@@ -116,6 +121,7 @@
             <th>日期</th>
             <th>時間</th>
             <th>地點</th>
+            <th>講師</th>
             <th style="width: 80px">編輯</th>
           </tr>
         </thead>
@@ -127,6 +133,7 @@
               <td>{{ lecture.date }}</td>
               <td>{{ lecture.time }}</td>
               <td>{{ lecture.place }}</td>
+              <td>{{ lecture.speaker }}</td>
               <td @click.stop="editLecture(lecture.id)">編輯</td>
             </tr>
   
@@ -169,9 +176,9 @@ import axios from 'axios';
     data() {
       return {
         showModal: false,
-        newLecture: { title: "", date: "", time: "", place: ""},
+        newLecture: { title: "", date: "", time: "", place: "", speaker: "" },
         showEditModal: false,
-        editLectureForm: { id: null, title: "", date: "", time: "", place: ""},
+        editLectureForm: { id: null, title: "", date: "", time: "", place: "",speaker: ""},
         showParticipantEditModal: false,
         editParticipantForm: {
           studentName: "",
@@ -221,6 +228,7 @@ import axios from 'axios';
               date: date,
               time: time,
               place: lec.location,
+              speaker: lec.speaker,
 
               participants: lec.participants || [], // 確保參與人員為空數組而不是 null
             });
@@ -236,14 +244,40 @@ import axios from 'axios';
       toggleExpanded(id) {
         this.expandedLectureId = this.expandedLectureId === id ? null : id;
       },
-      addLecture() {
-        if (!this.newLecture.title) return;
-        const newId = this.lectures.length
-          ? Math.max(...this.lectures.map((l) => l.id)) + 1
-          : 1;
-        this.lectures.push({ ...this.newLecture, id: newId, participants: [] });
-        this.newLecture = { title: "", date: "", time: "", place: ""};
-        this.showModal = false;
+      async addLecture() {
+        // 簡單驗證
+        if (!this.newLecture.title || !this.newLecture.speaker) {
+          alert("請填寫完整的講座資訊！");
+          return;
+        }
+
+        const token = localStorage.getItem("token");
+
+        try {
+          // 發送請求到後端
+          const response = await axios.post(
+            "/add-lecture",
+            this.newLecture, // 傳遞 newLecture 對象
+            {
+              headers: { Authorization: `Bearer ${token}` }, // 添加 Authorization 標頭
+            }
+          );
+
+          // 從後端返回的新講座數據
+          const addedLecture = response.data.lecture;
+
+          // 更新本地講座列表
+          this.lectures.push(addedLecture);
+
+          // 重置表單並關閉模態框
+          this.newLecture = { title: "", date: "", time: "", place: "", speaker: "" };
+          this.showModal = false;
+
+          alert("講座新增成功！");
+        } catch (error) {
+          console.error("Failed to add lecture:", error);
+          alert("講座新增失敗，請稍後再試！");
+        }
       },
       // 編輯講座
       editLecture(id) {
@@ -260,9 +294,9 @@ import axios from 'axios';
           alert("未找到對應的講座！");
           return;
         }
+        console.log(this.editLectureForm);
 
         const token = localStorage.getItem("token");
-        console.log(this.editLecture);
         try {
           // 發送請求到後端
           const response = await axios.post(
@@ -287,7 +321,7 @@ import axios from 'axios';
       },
       cancelEditLecture() {
         this.showEditModal = false;
-        this.editLectureForm = { id: null, title: "", date: "", time: "", place: ""};
+        this.editLectureForm = { id: null, title: "", date: "", time: "", place: "", speaker: ""};
       }, 
       // 編輯參與人員
       editParticipant(p, lectureId, pIndex) {
