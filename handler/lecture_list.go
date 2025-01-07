@@ -7,7 +7,7 @@ import (
 	"github.com/hsinnnlu/software_engineering_project/service"
 )
 
-func Lecturelisthandler(c *gin.Context){
+func Lecturelisthandler(c *gin.Context) {
 	lectures, err := service.GetActiveLectures()
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Lecture error"})

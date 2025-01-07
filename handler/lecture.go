@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/hsinnnlu/software_engineering_project/db"
 	"github.com/hsinnnlu/software_engineering_project/service"
 )
 
@@ -56,4 +57,57 @@ func Lecturehandler(c *gin.Context) {
 
 	// 處理無效的狀態
 	c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid status"})
+}
+
+// 修改表單
+func EditLecture(c *gin.Context) {
+	permission, exist := c.Get("permission")
+	// 驗證身份
+	if !exist || permission != "2" {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		fmt.Printf("role: %s\n", permission)
+		return
+	}
+	// 定義接收表單的結構
+	type EditLectureRequest struct {
+		ID    int    `json:"id" binding:"required"`    // 必須提供講座 ID
+		Title string `json:"title" binding:"required"` // 講座名稱
+		Date  string `json:"date" binding:"required"`  // 講座日期
+		Time  string `json:"time" binding:"required"`  // 講座時間
+		Place string `json:"place" binding:"required"` // 講座地點
+	}
+
+	// 接收 JSON 請求
+	var req EditLectureRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request", "details": err.Error()})
+		return
+	}
+
+	// UPDATE 資料庫
+	query := `UPDATE Lectures SET lecture_name = ?, lecture_timestamp = ?, lecture_location = ? WHERE lecture_id = ?`
+	res, err := db.DB.Exec(query, req.Title, req.Date+"T"+req.Time, req.Place, req.ID)
+	if err != nil {
+		fmt.Printf("error: %s\n", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update lecture", "details": err.Error()})
+		return
+	}
+
+	// 檢查是否有更新到記錄
+	rowsAffected, err := res.RowsAffected()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch update result", "details": err.Error()})
+		return
+	}
+
+	if rowsAffected == 0 {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Lecture not found or no changes made"})
+		return
+	}
+
+	// 成功更新
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Lecture updated successfully",
+		"lecture": req,
+	})
 }

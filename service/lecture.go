@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/hsinnnlu/software_engineering_project/db"
+	"github.com/hsinnnlu/software_engineering_project/models"
 )
 
 func Authlecture(lecture_id string) error {
@@ -24,10 +25,10 @@ func Authlecture(lecture_id string) error {
 	return nil
 }
 
-func GetActiveLectures() ([]struct{ ID, Name string }, error) {
-	var lectures []struct{ ID, Name string }
+func GetActiveLectures() ([]models.Lecture, error) {
+	var lectures []models.Lecture
 
-	query := `SELECT lecture_id, lecture_name FROM Lectures WHERE status = 1`
+	query := `SELECT * FROM Lectures WHERE status = 1`
 	rows, err := db.DB.Query(query)
 	if err != nil {
 		fmt.Printf("Query error: %s\n", err)
@@ -36,8 +37,17 @@ func GetActiveLectures() ([]struct{ ID, Name string }, error) {
 	defer rows.Close()
 
 	for rows.Next() {
-		var lecture struct{ ID, Name string }
-		if err := rows.Scan(&lecture.ID, &lecture.Name); err != nil {
+		var lecture models.Lecture
+		if err := rows.Scan(
+			&lecture.Lecture_id,
+			&lecture.Lecture_name,
+			&lecture.Lecture_speaker,
+			&lecture.Lecture_timestamp,
+			&lecture.Lecture_manager,
+			&lecture.Qty_participater,
+			&lecture.Lecture_location,
+			&lecture.Status,
+		); err != nil {
 			fmt.Printf("Row scan error: %s\n", err)
 			return nil, err // 回傳錯誤
 		}

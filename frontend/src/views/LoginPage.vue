@@ -94,6 +94,7 @@ export default {
         // 如果登入成功
         // alert("登入成功！");
         localStorage.setItem("token", response.data.token); // 儲存 JWT Token
+        localStorage.setItem("username", response.data.user_id); // 存使用者帳號
         let role;
         switch(response.data.permission){
           case "1":

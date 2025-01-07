@@ -4,9 +4,9 @@
     <header class="d-flex justify-content-between align-items-center p-2 bg-light border-bottom">
       <a v-if="this.isSignIn" href="#" class="text-primary fw-bold" @:click="switchStatus">切換為簽退</a>
       <a v-else href="#" class="text-primary fw-bold" @:click="switchStatus">切換為簽到</a>
-      <span>AI智慧未來 - 擁抱AI科技，共創AI新時代</span>
+      <span>{{ lectureName }}</span>
       <span>{{ currentTime }}</span>
-      <a href="#" class="text-primary fw-bold">登出</a>
+      <a href="#" class="text-primary fw-bold" @click="endChecking">退出</a>
     </header>
 
     <!-- 主要內容區 -->
@@ -106,10 +106,16 @@
 import axios from 'axios';
 
 export default {
+  props: {
+    lecture_name: {
+      type: String,
+      required: true,
+    },
+  },
   data() {
     return {
       // 畫面顯示的資料
-      lectureName: "",
+      lectureName: this.lecture_name,
       studentId: "", // 輸入的學號
       studentName: "", // 學生名稱：待改進（後端必須回傳名字才能紀錄）
       lecture_id: "1",
@@ -207,7 +213,12 @@ export default {
         throw new Error("Network response was not ok");
       }
     },
-  
+    endChecking(){
+      const username = localStorage.getItem('username');
+      this.$router.push({ 
+        path: `${username}`, 
+      });
+    },
     
 
     // 模擬「查看簽到退記錄表」的資料同步
@@ -237,6 +248,10 @@ export default {
     this.updateTime();
     setInterval(this.updateTime, 1000);
   },
+  created(){
+    this.lecture_id = this.$route.query.lecture_id;
+    this.lectureName = this.$route.query.lecture_name;
+  }
 };
 </script>
 

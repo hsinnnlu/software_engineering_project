@@ -2,6 +2,7 @@
 package handler
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -20,7 +21,7 @@ func LoginHandler(c *gin.Context) {
 		return
 	}
 
-    // 查 db 有沒有資以及密碼是否正確
+	// 查 db 有沒有資以及密碼是否正確
 	userPermission, authenticated, err := auth.AuthenticateUser(input.Username, input.Password)
 	if err != nil || !authenticated {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid credentials"})
@@ -33,5 +34,6 @@ func LoginHandler(c *gin.Context) {
 		return
 	}
 
+	fmt.Printf("username: %s\n", input.Username)
 	c.JSON(http.StatusOK, gin.H{"token": token, "user_id": input.Username, "permission": userPermission})
 }
