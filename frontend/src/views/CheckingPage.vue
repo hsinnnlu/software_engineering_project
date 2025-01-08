@@ -1,7 +1,7 @@
 <template>
-  <div class="checking-page">
+  <div class="checking-page" :style="{ backgroundColor: backgroundColor }">
     <!-- 頂部區域 -->
-    <header class="d-flex justify-content-between align-items-center p-2 bg-light border-bottom">
+    <header class="d-flex justify-content-between align-items-center p-2 border-bottom">
       <a v-if="this.isSignIn" href="#" class="text-primary fw-bold" @:click="switchStatus">切換為簽退</a>
       <a v-else href="#" class="text-primary fw-bold" @:click="switchStatus">切換為簽到</a>
       <span>{{ lectureName }}</span>
@@ -118,8 +118,9 @@ export default {
       lectureName: this.lecture_name,
       studentId: "", // 輸入的學號
       studentName: "", // 學生名稱：待改進（後端必須回傳名字才能紀錄）
-      lecture_id: "1",
+      lecture_id: "",
       isSignIn: true, 
+      backgroundColor: "#f8f9fa",
       
       // 簽到資料
       records: [
@@ -170,54 +171,120 @@ export default {
       this.records.push(newRecord);
       // 再呼叫 API 將資料送到後端
       try {
-        await this.sendCheckInRequest(status);
+        const res = await this.sendCheckInRequest(status);
         
-        // 更新同步狀況
+        // 如果後端同步，則更新同步狀況
         this.records[this.records.length - 1].synced = true;
-        // 待改進
-        if(this.isSignIn){
-          this.studentId = "簽到成功"; 
-        } else {
-          this.studentId = "簽退成功";
-        }
-        
+        this.studentName = res?.data?.username;
+        this.records[this.records.length - 1].studentName = this.studentName;
+
+        this.backgroundColor = "#A5E696";        
+        setTimeout(()=>{this.backgroundColor="#f8f9fa"}, 2000)
       } catch (error) {
-        alert("簽到資料送出失敗！");
+        this.backgroundColor = "#FFA1A1"
+
+        this.studentName="簽到失敗";
+        setTimeout(()=>{this.studentName="", this.backgroundColor="#f8f9fa", this.studentId=""}, 2000); 
         console.error(error);
       }
 
       // 延遲顯示
-      setTimeout(()=>{this.studentId=""}, 2000);
 
     },
-    // 實際送出簽到的請求 (sign_in)
+    // 實際送出簽到的請求 (sign_in, sign_out)
     async sendCheckInRequest(Status) {
       // 準備要送出的資料結構 { sign_in_time, sign_out_time, status }
       const now = new Date().toISOString();
       const token = localStorage.getItem("token");
-      const requestBody = {
-        sign_in_time: now,
-        sign_out_time: null,  // 簽到時先給空字串或 null
-        status: Status,  // 用來區分簽到或簽退
-      };
+      var requestBody;
+      const route = (Status==="in") ? "sign-in" : "sign-out"
+      if(Status == "in"){
+          requestBody = {
+            sign_in_time: now,
+            sign_out_time: null,  // 簽到時先給空字串或 null
+            status: Status,  // 用來區分簽到或簽退
+          };
+      } else{
+        requestBody = {
+            sign_in_time: null,
+            sign_out_time: now,  // 簽到時先給空字串或 null
+            status: Status,  // 用來區分簽到或簽退
+          };
+      }
 
       try{
-        await axios.post(
-          `/${this.lecture_id}/`+`${this.studentId}/sign-in`,
+        const res = await axios.post(
+          `/${this.lecture_id}/`+`${this.studentId}/${route}`,
           requestBody,
           {
             headers: { Authorization: `Bearer ${token}` },
           }
         );
+        return res
       } catch(error){
         throw new Error("Network response was not ok");
       }
     },
+    // 退出簽到，回到主畫面
     endChecking(){
       const username = localStorage.getItem('username');
       this.$router.push({ 
         path: `${username}`, 
       });
+    },
+
+    // 獲取伺服器上的資料
+    async fetchCheckingList() {
+      const token = localStorage.getItem("token");
+
+      // 清空現有記錄，避免數據重複
+      this.records = [];
+
+      try {
+        // 發送 GET 請求
+        const res = await axios.get(`/list-checking/${this.lecture_id}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        if (res.data && Array.isArray(res.data.records)) {
+          res.data.records.forEach((rec) => {
+            // 簽到列
+            if (rec.sign_in_time) {
+              this.records.push({
+                id: this.records.length + 1, // 唯一 ID
+                status: "簽到",
+                time: rec.sign_in_time,
+                studentId: rec.user_id || "未知學號",
+                studentName: rec.user_name || "未知名稱",
+                synced: true, // 假設數據已同步
+              });
+            }
+
+            // 簽退列
+            if (rec.sign_out_time) {
+              this.records.push({
+                id: this.records.length + 1, // 唯一 ID
+                status: "簽退",
+                time: rec.sign_out_time,
+                studentId: rec.user_id || "未知學號",
+                studentName: rec.user_name || "未知名稱",
+                synced: true, // 假設數據已同步
+              });
+            }
+          });
+        } else {
+          console.log("沒東西")
+        }
+      } catch (error) {
+        // 處理請求錯誤
+        console.error("Error fetching checking list:", error);
+
+        // 顯示錯誤訊息
+        alert(
+          error.response?.data?.error ||
+            "無法獲取簽到列表，請稍後再試！"
+        );
+      }
     },
     
 
@@ -242,7 +309,7 @@ export default {
       const now = new Date();
       this.currentTime = now.toLocaleTimeString();
     },
-  },
+  }, // methods end
   mounted() {
     // 每秒更新時間
     this.updateTime();
@@ -251,6 +318,7 @@ export default {
   created(){
     this.lecture_id = this.$route.query.lecture_id;
     this.lectureName = this.$route.query.lecture_name;
+    this.fetchCheckingList();
   }
 };
 </script>

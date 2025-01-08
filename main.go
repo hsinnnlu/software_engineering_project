@@ -48,6 +48,10 @@ func main() {
 		// 修改講座資訊（ manager）快速建構用，沒有分層次
 		authorized.POST("edit-lecture", handler.EditLecture)
 		authorized.POST("add-lecture", handler.AddLecture)
+		authorized.GET("/list-checking/:lecture_id", handler.ListChecking)
+
+		// 查看參與過哪些講座（student）
+		authorized.GET("/student/participated-lectures", handler.LectureParticipatehandler)
 
 		// authorized.GET("/userinfo", service.GetUserProfile)
 		// authorized.GET("/userinfo", services.GetUserProfile)        // finished

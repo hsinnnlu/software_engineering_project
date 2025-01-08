@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"database/sql"
 	"fmt"
 	"net/http"
 
@@ -33,20 +34,53 @@ func Lecturehandler(c *gin.Context) {
 
 	// 根據業務邏輯處理
 	if input.Status == "in" {
+
+		// 先確認人在不在
+		query := `SELECT user_name FROM Users WHERE user_id = ?`
+		var username string
+		err := db.DB.QueryRow(query, userID).Scan(&username)
+		if err != nil {
+			if err == sql.ErrNoRows {
+				// 沒有找到用戶
+				c.JSON(http.StatusBadRequest, gin.H{"message": "user not exist"})
+				return
+			}
+			// 其他錯誤
+			fmt.Printf("error: %s\n", err)
+			c.JSON(http.StatusInternalServerError, gin.H{"message": "internal error"})
+			return
+		}
+
 		// 執行簽到邏輯
-		err := service.InsertStudentIn(userID, lectureID, input.Sign_in_time)
+		err = service.InsertStudentIn(userID, lectureID, input.Sign_in_time)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to sign in"})
 			return
 		}
 
-		c.JSON(http.StatusOK, gin.H{"message": "Signed in successfully"})
+		c.JSON(http.StatusOK, gin.H{"username": username})
 		return
 	}
 
 	if input.Status == "out" {
+
+		// 先確認人在不在
+		query := `SELECT user_name FROM Users WHERE user_id = ?`
+		var username string
+		err := db.DB.QueryRow(query, userID).Scan(&username)
+		if err != nil {
+			if err == sql.ErrNoRows {
+				// 沒有找到用戶
+				c.JSON(http.StatusBadRequest, gin.H{"message": "user not exist"})
+				return
+			}
+			// 其他錯誤
+			fmt.Printf("error: %s\n", err)
+			c.JSON(http.StatusInternalServerError, gin.H{"message": "internal error"})
+			return
+		}
 		// 執行簽退邏輯
-		err := service.InsertStudentOut(userID, lectureID, input.Sign_out_time)
+		err = service.InsertStudentOut(userID, lectureID, input.Sign_out_time)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to sign out"})
 			return
@@ -117,7 +151,7 @@ func EditLecture(c *gin.Context) {
 // 新增講座
 func AddLecture(c *gin.Context) {
 	role, exist := c.Get("permission")
-	adder, exist := c.Get("username")
+	adder, _ := c.Get("username")
 
 	// 驗證身份
 	if !exist || role != "2" {
